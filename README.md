@@ -1,7 +1,7 @@
 # IMPORTANT NOTE: This mod is still in development and can not yet be downloaded. It is also not supported by Crowd Control yet.
 
 # Terraria Crowd Control
-A mod for Terraria that allows the use of the Crowd Control Twitch extension.</br>
+A mod for Terraria that allows the use of the [Crowd Control](https://crowdcontrol.live) Twitch extension.</br>
 Crowd Control allows viewers of a Twitch stream to use their Bits to cause events to happen in the streamer's game.
 
 # Mod Installation

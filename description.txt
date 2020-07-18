@@ -10,4 +10,4 @@ Some effects include:
 - Flip the screen
 - and many MORE...
 
-More information on GitHub: github.com/MrG-bit/TerrariaCrowdControl
+More information on GitHub: github.com/MrG-bit/TerrariaCrowdControlMod

@@ -51,7 +51,7 @@ namespace CrowdControlMod
 			base.Unload();
 
 			// Stop the server when the mod is unloaded
-			_server.Stop();
+			_server?.Stop();
 
 			Main.OnPostDraw -= OnPostDraw;
 		}

@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalProjectile.cs
-/// Last Updated: 2020-07-16
+/// Last Updated: 2020-07-18
 /// Author: MRG-bit
 /// Description: Change things for every Projectile in the game
 ///</summary>
@@ -25,8 +25,8 @@ namespace CrowdControlMod.Projectiles
             // Create splash of colour on nearby tiles when collision occurs
             if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled && projectile.owner == Main.myPlayer && !projectile.minion && !projectile.sentry)
             {
-                int x = (int)(projectile.position.X / 16);
-                int y = (int)(projectile.position.Y / 16);
+                int x = (int)(projectile.Center.X / 16);
+                int y = (int)(projectile.Center.Y / 16);
                 CrowdControlMod._server.RainbowifyTileClient(x - 1, y, true);
                 CrowdControlMod._server.RainbowifyTileClient(x - 1, y - 1, true);
                 CrowdControlMod._server.RainbowifyTileClient(x - 1, y + 1, true);

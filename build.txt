@@ -1,0 +1,3 @@
+displayName = Crowd Control for Terraria
+author = MR.G-bit
+version = 0.1

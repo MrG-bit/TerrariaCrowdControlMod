@@ -1,0 +1,13 @@
+Crowd Control for Terraria
+This mod can be used in conjunction with the Crowd Control Desktop Application to allow Twitch viewers to interact with the streamer's Terraria world.
+
+Some effects include:
+- Kill / heal / damage the player
+- Increase the spawn rate / spawn mobs
+- Invert the controls
+- Fast-forward time / set the time
+- Buff / debuff the player
+- Flip the screen
+- and many MORE...
+
+More information on GitHub: github.com/MrG-bit/TerrariaCrowdControl

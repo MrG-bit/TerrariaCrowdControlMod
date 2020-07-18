@@ -32,6 +32,7 @@ namespace CrowdControlMod
 			SET_PAINTTILE,      // int x, int y, byte colour (Paints a tile with a colour)
 			SET_SPEED,			// bool enabled
 			SET_JUMP,			// bool enabled
+			START_SUNDIAL,
 		}
 
 		private enum RequestType
@@ -88,15 +89,17 @@ namespace CrowdControlMod
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_rainbowPaintTimer = null;
 		public readonly Timer m_shootBombTimer = null;
+		public readonly Timer m_projItemTimer = null;
 		public readonly Timer m_increasedSpawnsTimer = null;
 		public readonly Timer m_flipCameraTimer = null;
 		public readonly Timer m_fishWallTimer = null;
 
 		// Times for the various effects (in seconds)
-		public readonly int m_timeFastPlayer = 30;
-		public readonly int m_timeJumpPlayer = 30;
-		public readonly int m_timeRainbowPaint = 30;
+		public readonly int m_timeFastPlayer = 25;
+		public readonly int m_timeJumpPlayer = 25;
+		public readonly int m_timeRainbowPaint = 40;
 		public readonly int m_timeShootBomb = 20;
+		public readonly int m_timeProjItem = 40;
 		public readonly int m_timeIncSpawnrate = 30;
 		public readonly int m_timeBuffDaze = 30;
 		public readonly int m_timeBuffLev = 30;
@@ -232,6 +235,13 @@ namespace CrowdControlMod
                 };
                 m_shootBombTimer.Elapsed += delegate { StopEffect("shoot_bomb"); };
 
+				m_projItemTimer = new Timer
+				{
+					Interval = 1000 * m_timeProjItem,
+					AutoReset = false
+				};
+				m_projItemTimer.Elapsed += delegate { StopEffect("shoot_fish"); };
+
                 m_increasedSpawnsTimer = new Timer
                 {
                     Interval = 1000 * m_timeIncSpawnrate,
@@ -299,6 +309,8 @@ namespace CrowdControlMod
 				StopEffect("tile_paint");
             if (m_shootBombTimer.Enabled)
                 StopEffect("shoot_bomb");
+			if (m_projItemTimer.Enabled)
+				StopEffect("proj_item");
             if (m_increasedSpawnsTimer.Enabled)
                 StopEffect("inc_spawnrate");
             if (m_flipCameraTimer.Enabled)
@@ -404,7 +416,7 @@ namespace CrowdControlMod
         private EffectResult ProcessEffect(string code, string viewer, int requestType)
         {
             // Only process the request if the game is not paused
-            if (Main.gamePaused && requestType != (int)RequestType.STOP)
+            if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer && Main.gamePaused && requestType != (int)RequestType.STOP)
             {
                 TDebug.WriteDebug("Game is paused. Will retry [" + code + "]", Color.Yellow);
                 return EffectResult.RETRY;
@@ -499,7 +511,13 @@ namespace CrowdControlMod
                     TDebug.WriteMessage(166, "Shooting spawn bombs for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
 					break;
 
-                case "sp_house":
+				case "proj_item":
+					m_projItemTimer.Start();
+					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
+					TDebug.WriteMessage(2481, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
+					break;
+
+				case "sp_house":
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					{
 						if (Effect_SpawnHouse(m_player.player, viewer) == EffectResult.RETRY)
@@ -574,10 +592,8 @@ namespace CrowdControlMod
 						return EffectResult.RETRY;
 					}
 
-					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
-						Main.fastForwardTime = true;
-					else
-						NetMessage.SendData(Terraria.ID.MessageID.Assorted1, -1, -1, null, Main.myPlayer, 3f);
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) Main.fastForwardTime = true;
+					else SendData(EPacketEffect.START_SUNDIAL);
 					TDebug.WriteMessage(3064, viewer + " advanced time to sunrise", MSG_C_NEUTRAL);
                     break;
 
@@ -653,7 +669,12 @@ namespace CrowdControlMod
                     TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Shooting no longer spawns bombs", MSG_C_TIMEREND);
                     break;
 
-                case "inc_spawnrate":
+				case "proj_item":
+					m_projItemTimer.Stop();
+					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Projectiles are no longer randomised", MSG_C_TIMEREND);
+					break;
+
+				case "inc_spawnrate":
                     m_increasedSpawnsTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = 1f;
 					else SendData(EPacketEffect.SET_SPAWNRATE, 1f);
@@ -1527,8 +1548,9 @@ namespace CrowdControlMod
 		// Rainbowify a given tile (called from client)
 		public void RainbowifyTileClient(int x, int y, bool randomColour = false)
 		{
-			if (!Main.tile[x, y].active())
-				return;
+			// Check if tile is active and in the bounds of the array
+			try { if (!Main.tile[x, y].active()) return; }
+			catch { return; }
 
 			// Forcefully set colour of tile
 			if (randomColour)
@@ -1630,6 +1652,10 @@ namespace CrowdControlMod
 					enabled = reader.ReadBoolean();
 					Main.player[sender].GetModPlayer<CCPlayer>().m_servJump = enabled;
 					debugText += enabled;
+					break;
+				case EPacketEffect.START_SUNDIAL:
+					Main.fastForwardTime = true;
+					NetMessage.SendData(Terraria.ID.MessageID.WorldData, -1, -1, null);
 					break;
 			}
 

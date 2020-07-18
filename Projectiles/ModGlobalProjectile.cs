@@ -1,13 +1,12 @@
 ﻿///<summary>
 /// File: ModGlobalProjectile.cs
-/// Last Updated: 2020-07-18
+/// Last Updated: 2020-07-19
 /// Author: MRG-bit
 /// Description: Change things for every Projectile in the game
 ///</summary>
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 using Terraria;
 using Terraria.ModLoader;
 

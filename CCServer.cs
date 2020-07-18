@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-18
+/// Last Updated: 2020-07-19
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -97,18 +97,18 @@ namespace CrowdControlMod
 		// Times for the various effects (in seconds)
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
-		public readonly int m_timeRainbowPaint = 40;
-		public readonly int m_timeShootBomb = 20;
-		public readonly int m_timeProjItem = 40;
-		public readonly int m_timeIncSpawnrate = 30;
-		public readonly int m_timeBuffDaze = 30;
-		public readonly int m_timeBuffLev = 30;
-		public readonly int m_timeBuffConf = 30;
+		public readonly int m_timeRainbowPaint = 45;
+		public readonly int m_timeShootBomb = 30;
+		public readonly int m_timeProjItem = 45;
+		public readonly int m_timeIncSpawnrate = 40;
+		public readonly int m_timeBuffDaze = 25;
+		public readonly int m_timeBuffLev = 25;
+		public readonly int m_timeBuffConf = 25;
 		public readonly int m_timeBuffIron = 120;
 		public readonly int m_timeBuffRegen = 120;
 		public readonly int m_timeBuffLife = 120;
 		public readonly int m_timeBuffSpeed = 120;
-		public readonly int m_timeFlipScreen = 30;
+		public readonly int m_timeFlipScreen = 25;
 		public readonly int m_timeFishWall = 25;
 		public readonly int m_timeDarkScreen = 25;
 
@@ -240,7 +240,7 @@ namespace CrowdControlMod
 					Interval = 1000 * m_timeProjItem,
 					AutoReset = false
 				};
-				m_projItemTimer.Elapsed += delegate { StopEffect("shoot_fish"); };
+				m_projItemTimer.Elapsed += delegate { StopEffect("proj_item"); };
 
                 m_increasedSpawnsTimer = new Timer
                 {
@@ -508,7 +508,7 @@ namespace CrowdControlMod
 
 				case "shoot_bomb":
                     m_shootBombTimer.Start();
-                    TDebug.WriteMessage(166, "Shooting spawn bombs for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
+                    TDebug.WriteMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
 					break;
 
 				case "proj_item":
@@ -666,7 +666,7 @@ namespace CrowdControlMod
 
 				case "shoot_bomb":
                     m_shootBombTimer.Stop();
-                    TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Shooting no longer spawns bombs", MSG_C_TIMEREND);
+                    TDebug.WriteMessage(MSG_ITEM_TIMEREND, "No longer shooting explosives", MSG_C_TIMEREND);
                     break;
 
 				case "proj_item":
@@ -1549,8 +1549,8 @@ namespace CrowdControlMod
 		public void RainbowifyTileClient(int x, int y, bool randomColour = false)
 		{
 			// Check if tile is active and in the bounds of the array
-			try { if (!Main.tile[x, y].active()) return; }
-			catch { return; }
+			if (x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY && !Main.tile[x, y].active()) 
+				return; 
 
 			// Forcefully set colour of tile
 			if (randomColour)

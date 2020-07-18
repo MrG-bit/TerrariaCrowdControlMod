@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-18
+/// Last Updated: 2020-07-19
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -9,15 +9,31 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using Terraria.ID;
+using System.Collections.Generic;
 
 namespace CrowdControlMod
 {
     public class CCPlayer : ModPlayer
     {
-        private bool serverStartedViaControls = false;      // Whether server was started when joining a multiplayer server
-        public float m_spawnRate = 1f;                      // NPC spawnrate for this player
-        public bool m_servSpeed = false;                    // Whether player movement speed is increased (server-side)
-        public bool m_servJump = false;                     // Whether player jump boost is increased (server-side)
+        private readonly static HashSet<short> m_explosives =       // Explosives that can be shot
+            new HashSet<short>()
+        {
+            ProjectileID.Grenade,
+            ProjectileID.StickyGrenade,
+            ProjectileID.BouncyGrenade,
+            ProjectileID.Beenade,
+            ProjectileID.PartyGirlGrenade,
+            ProjectileID.Bomb,
+            ProjectileID.StickyBomb,
+            ProjectileID.BouncyBomb,
+            ProjectileID.Dynamite,
+            ProjectileID.BouncyDynamite,
+            ProjectileID.RocketIII
+        };
+        private bool serverStartedViaControls = false;              // Whether server was started when joining a multiplayer server
+        public float m_spawnRate = 1f;                              // NPC spawnrate for this player
+        public bool m_servSpeed = false;                            // Whether player movement speed is increased (server-side)
+        public bool m_servJump = false;                             // Whether player jump boost is increased (server-side)
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -121,10 +137,24 @@ namespace CrowdControlMod
         {
             if (Main.myPlayer == player.whoAmI)
             {
-                // Shoot a bomb instead of the intended projectile
-                if (CrowdControlMod._server.m_shootBombTimer.Enabled && item.shoot != ProjectileID.Bomb)
+                // Shoot an explosive instead of the intended projectile
+                if (CrowdControlMod._server.m_shootBombTimer.Enabled && !m_explosives.Contains((short)item.shoot))
                 {
-                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), ProjectileID.Bomb, damage, knockBack, Main.myPlayer);
+                    int r = Main.rand.Next(100);
+                    short id;
+                    if (r < 3) id = ProjectileID.BouncyDynamite;
+                    else if (r < 6) id = ProjectileID.Dynamite;
+                    else if (r < 9) id = ProjectileID.BouncyBomb;
+                    else if (r < 12) id = ProjectileID.StickyBomb;
+                    else if (r < 15) id = ProjectileID.Bomb;
+                    else if (r < 30) id = ProjectileID.Beenade;
+                    else if (r < 45) id = ProjectileID.StickyGrenade;
+                    else if (r < 60) id = ProjectileID.BouncyGrenade;
+                    else if (r < 75) id = ProjectileID.PartyGirlGrenade;
+                    else if (r < 87) id = ProjectileID.RocketIII;
+                    else id = ProjectileID.Grenade;
+                    
+                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), id, damage, knockBack, Main.myPlayer);
                     return false;
                 }
 
@@ -136,6 +166,14 @@ namespace CrowdControlMod
             }
 
             return base.Shoot(item, ref position, ref speedX, ref speedY, ref type, ref damage, ref knockBack);
+        }
+
+        // Determine if ammo is consumed
+        public override bool ConsumeAmmo(Item weapon, Item ammo)
+        {
+            if (Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_shootBombTimer.Enabled)
+                    return false;
+            return base.ConsumeAmmo(weapon, ammo);
         }
 
         // Give the player coins (extracted from the Terraria source code)

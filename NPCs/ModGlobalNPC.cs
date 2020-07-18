@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalNPC.cs
-/// Last Updated: 2020-07-18
+/// Last Updated: 2020-07-19
 /// Author: MRG-bit
 /// Description: Change things for every NPC in the game
 ///</summary>

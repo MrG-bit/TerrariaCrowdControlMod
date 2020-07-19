@@ -38,7 +38,7 @@ namespace CrowdControlMod.NPCs
         public override void HitEffect(NPC npc, int hitDirection, double damage)
         {
             // Spawn paintballs if the NPC dies and rainbow-ify is enabled
-            if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled && npc.life - damage <= 0)
+            if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled && npc.life <= 0)
                 for (int i = 0; i < m_paintDir.Length; ++i)
                     Projectile.NewProjectile(npc.position, Vector2.Normalize(m_paintDir[i]) * Main.rand.NextFloat(m_paintMinSpeed, m_paintMaxSpeed), Terraria.ID.ProjectileID.PainterPaintball, 0, 0f, Main.myPlayer, 0, Main.rand.NextFloat());
             base.HitEffect(npc, hitDirection, damage);

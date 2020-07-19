@@ -122,7 +122,7 @@ namespace CrowdControlMod
                     player.maxRunSpeed = aboveSurface ? CrowdControlMod._server.m_fastPlrMaxSurfSpeed : CrowdControlMod._server.m_fastPlrMaxCaveSpeed;
                     player.runAcceleration = aboveSurface ? CrowdControlMod._server.m_fastPlrSurfAccel : CrowdControlMod._server.m_fastPlrCaveAccel;
                 }
-                
+
                 // Make player jump higher
                 if ((CrowdControlMod._server.m_jumpPlayerTimer.Enabled && Main.myPlayer == player.whoAmI) || m_servJump)
                 {
@@ -153,7 +153,7 @@ namespace CrowdControlMod
                     else if (r < 75) explosiveType = ProjectileID.PartyGirlGrenade;
                     else if (r < 87) explosiveType = ProjectileID.RocketIII;
                     else explosiveType = ProjectileID.Grenade;
-                    
+
                     Projectile.NewProjectile(position, new Vector2(speedX, speedY), explosiveType, damage, knockBack, Main.myPlayer);
                     return false;
                 }

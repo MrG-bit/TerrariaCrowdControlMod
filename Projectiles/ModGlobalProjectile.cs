@@ -7,6 +7,8 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Runtime.InteropServices;
 using Terraria;
 using Terraria.ModLoader;
 
@@ -37,14 +39,14 @@ namespace CrowdControlMod.Projectiles
                 Vector2 drawPos = projectile.position - Main.screenPosition + drawOrigin + new Vector2(0f, projectile.gfxOffY);
 
                 spriteBatch.Draw(
-                    texture: texture, 
-                    position: drawPos, 
-                    sourceRectangle: null, 
+                    texture: texture,
+                    position: drawPos,
+                    sourceRectangle: null,
                     color: lightColor,
-                    rotation: projectile.rotation, 
-                    origin: drawOrigin, 
+                    rotation: projectile.rotation,
+                    origin: drawOrigin,
                     scale: projectile.scale,
-                    effects: SpriteEffects.None, 
+                    effects: SpriteEffects.None,
                     layerDepth: 0f);
             }
 
@@ -54,7 +56,7 @@ namespace CrowdControlMod.Projectiles
         // Called when a projectile is killed
         public override void Kill(Projectile projectile, int timeLeft)
         {
-            // Create splash of colour on nearby tiles when collision occurs
+            // Create splash of colour on nearby tiles when the projectile is destroyed
             if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled &&
                 projectile.owner == Main.myPlayer && !projectile.minion && !projectile.sentry && !projectile.bobber)
             {

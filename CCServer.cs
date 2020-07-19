@@ -52,6 +52,17 @@ namespace CrowdControlMod
 			public string viewer;
 			public int type;
 
+            // I hate structs
+#pragma warning disable IDE0051 // Remove unused private members
+            private Request(int n)
+#pragma warning restore IDE0051 // Remove unused private members
+            {
+				id = n;
+				code = "";
+				viewer = "";
+				type = 0;
+            }
+
 			public static Request FromJSON(string jsonData)
 			{
 				return JsonConvert.DeserializeObject<Request>(jsonData);
@@ -68,6 +79,16 @@ namespace CrowdControlMod
 			public int id;
 			public int status;
 			public string message;
+
+            // Structs suck
+#pragma warning disable IDE0051 // Remove unused private members
+            private Response(int n)
+#pragma warning restore IDE0051 // Remove unused private members
+            {
+				id = n;
+				status = 0;
+				message = "";
+            }
 
 			public static Response FromJSON(string jsonData)
 			{
@@ -163,7 +184,6 @@ namespace CrowdControlMod
 		private int m_rainbowIndex = 0;										// Index of the paint in the rainbowPaint array to use next
 		private readonly CyclicArray<Tile> m_rainbowTiles;					// Keep track of the tiles painted so the same tile is painted repeatedly
 		public readonly int m_spawnGuardYOffset = -150;						// Y offset from the player's Y that the dungeon guardian is spawned
-        public readonly int m_dayRate = 50;									// Amount that time increases per Terraria update (added to Main.time - default is 1)
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
 
@@ -188,7 +208,7 @@ namespace CrowdControlMod
 
         // Default constructor
         public CCServer()
-        {            
+        {
             // Ignore silent exceptions thrown by Socket.Connect (cleaner chat during testing)
             if (TDebug.IN_DEBUG)
             {
@@ -335,7 +355,7 @@ namespace CrowdControlMod
                 try { m_activeSocket.Connect("127.0.0.1", 58430); connected = true; }
                 catch (System.Threading.ThreadAbortException e) { throw e; }
                 catch (Exception) { }
-                
+
                 if (connected)
                 {
 					TDebug.WriteMessage(1525, "Connected to Crowd Control", Color.Green);
@@ -466,7 +486,7 @@ namespace CrowdControlMod
 					break;
 
 				case "randtp":
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient) 
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.TeleportationPotion);
 					else
 					{
@@ -806,7 +826,7 @@ namespace CrowdControlMod
 				TDebug.WriteDebug("Item prefix failed - will retry", Color.Yellow);
 				return EffectResult.RETRY;
 			}
-			
+
 			return EffectResult.SUCCESS;
 		}
 
@@ -1223,7 +1243,7 @@ namespace CrowdControlMod
 					}
 				}
 			}
-			
+
 			// LEAVES
 			for (int num94 = 0; num94 < num113; num94++)
 			{
@@ -1252,7 +1272,7 @@ namespace CrowdControlMod
 					}
 				}
 			}
-			
+
 			// UNDERGROUND
 			if (genUnderground && num104 >= 4 && genRand.Next(3) != 0)
 			{
@@ -1543,7 +1563,7 @@ namespace CrowdControlMod
 			}
 			else
 				WorldGen.RangeFrame(i - 50, top - 10, i + 50, bottom + 10);
-			
+
 			return true;
 		}
 
@@ -1565,8 +1585,8 @@ namespace CrowdControlMod
 		public void RainbowifyTileClient(int x, int y, bool randomColour = false)
 		{
 			// Check if tile is active and in the bounds of the array
-			if (x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY && !Main.tile[x, y].active()) 
-				return; 
+			if (x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY && !Main.tile[x, y].active())
+				return;
 
 			// Forcefully set colour of tile
 			if (randomColour)
@@ -1609,7 +1629,7 @@ namespace CrowdControlMod
 				}
 				packet.Send(-1, -1);
 				TDebug.WriteDebug("Client sent packet type: " + packetEffect, Color.Yellow);
-				
+
 			}
 			catch (Exception e) { TDebug.WriteDebug("Failed to send modded packet: " + e.Message, Color.Yellow); }
 		}
@@ -1681,14 +1701,14 @@ namespace CrowdControlMod
 		// Attempt to write data to a packet
 		private void WriteToPacket(ModPacket packet, object data)
 		{
-			if (data is bool) packet.Write((bool)data);
-			else if (data is byte) packet.Write((byte)data);
-			else if (data is byte[]) packet.Write((byte[])data);
-			else if (data is int) packet.Write((int)data);
-			else if (data is float) packet.Write((float)data);
-			else if (data is string) packet.Write((string)data);
-			else if (data is char) packet.Write((char)data);
-			else if (data is short) packet.Write((short)data);
+			if (data is bool _bool) packet.Write(_bool);
+			else if (data is byte _byte) packet.Write(_byte);
+			else if (data is byte[] _byteA) packet.Write(_byteA);
+			else if (data is int _int) packet.Write(_int);
+			else if (data is float _float) packet.Write(_float);
+			else if (data is string _string) packet.Write(_string);
+			else if (data is char _char) packet.Write((_char));
+			else if (data is short _short) packet.Write(_short);
 			else packet.Write(0);
 		}
 

@@ -514,7 +514,7 @@ namespace CrowdControlMod
 				case "proj_item":
 					m_projItemTimer.Start();
 					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
-					TDebug.WriteMessage(2481, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
+					TDebug.WriteMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "sp_house":
@@ -754,18 +754,27 @@ namespace CrowdControlMod
 
 			if (affectedItem.melee)
 			{
-				index = Main.rand.Next(m_preMelee.Length + m_preUni.Length);
-				prefix = (index < m_preMelee.Length) ? m_preMelee[index] : m_preUni[index - m_preMelee.Length];
+				do
+				{
+					index = Main.rand.Next(m_preMelee.Length + m_preUni.Length);
+					prefix = (index < m_preMelee.Length) ? m_preMelee[index] : m_preUni[index - m_preMelee.Length];
+				} while (prefix == affectedItem.prefix);
 			}
 			else if (affectedItem.ranged)
 			{
-				index = Main.rand.Next(m_preRange.Length + m_preUni.Length);
-				prefix = (index < m_preRange.Length) ? m_preRange[index] : m_preUni[index - m_preRange.Length];
+				do
+				{
+					index = Main.rand.Next(m_preRange.Length + m_preUni.Length);
+					prefix = (index < m_preRange.Length) ? m_preRange[index] : m_preUni[index - m_preRange.Length];
+				} while (prefix == affectedItem.prefix);
 			}
 			else if (affectedItem.magic)
 			{
-				index = Main.rand.Next(m_preMage.Length + m_preUni.Length);
-				prefix = (index < m_preMage.Length) ? m_preMage[index] : m_preUni[index - m_preMage.Length];
+				do
+				{
+					index = Main.rand.Next(m_preMage.Length + m_preUni.Length);
+					prefix = (index < m_preMage.Length) ? m_preMage[index] : m_preUni[index - m_preMage.Length];
+				} while (prefix == affectedItem.prefix);
 			}
 			else
 			{

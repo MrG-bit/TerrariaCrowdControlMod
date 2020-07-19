@@ -452,14 +452,14 @@ namespace CrowdControlMod
 					break;
 
 				case "fastplr":
-					m_fastPlayerTimer.Start();
+					ResetTimer(m_fastPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendData(EPacketEffect.SET_SPEED, true);
 					TDebug.WriteMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "jumpplr":
-					m_jumpPlayerTimer.Start();
+					ResetTimer(m_jumpPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendData(EPacketEffect.SET_JUMP, true);
 					TDebug.WriteMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
@@ -502,17 +502,17 @@ namespace CrowdControlMod
 						m_rainbowIndex = Main.rand.Next(m_rainbowPaint.Length);
 						m_rainbowTiles.Clear();
 					}
-					m_rainbowPaintTimer.Start();
+					ResetTimer(m_rainbowPaintTimer);
 					TDebug.WriteMessage(662, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "shoot_bomb":
-                    m_shootBombTimer.Start();
+					ResetTimer(m_shootBombTimer);
                     TDebug.WriteMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
 					break;
 
 				case "proj_item":
-					m_projItemTimer.Start();
+					ResetTimer(m_projItemTimer);
 					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
 					TDebug.WriteMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
 					break;
@@ -540,7 +540,7 @@ namespace CrowdControlMod
                     break;
 
                 case "inc_spawnrate":
-                    m_increasedSpawnsTimer.Start();
+					ResetTimer(m_increasedSpawnsTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = m_increaseSpawnRate;
 					else SendData(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
                     TDebug.WriteMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
@@ -620,12 +620,12 @@ namespace CrowdControlMod
                 case "cam_flip":
                     if (!Filters.Scene["FlipVertical"].IsActive())
                         Filters.Scene.Activate("FlipVertical").GetShader();
-                    m_flipCameraTimer.Start();
+					ResetTimer(m_flipCameraTimer);
                     TDebug.WriteMessage(viewer + " turned the world upside down for " + m_timeFlipScreen + " seconds", MSG_C_NEGATIVE);
                     break;
 
 				case "cam_fish":
-					m_fishWallTimer.Start();
+					ResetTimer(m_fishWallTimer);
 					TDebug.WriteMessage(669, viewer + " covered the screen with fish for " + m_timeFishWall + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -695,6 +695,13 @@ namespace CrowdControlMod
 			}
 
             return EffectResult.SUCCESS;
+        }
+
+		/// Reset timer
+		private void ResetTimer(Timer timer)
+        {
+			timer.Stop();
+			timer.Start();
         }
 
         // Drop the selected item or drop a random item from the hotbar

@@ -56,8 +56,7 @@ namespace CrowdControlMod.Projectiles
         {
             // Create splash of colour on nearby tiles when collision occurs
             if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled &&
-                projectile.owner == Main.myPlayer && !projectile.minion && !projectile.sentry && !projectile.bobber
-                && !Main.lightPet[projectile.type] && !Main.projPet[projectile.type] && !Main.vanityPet[projectile.type])
+                projectile.owner == Main.myPlayer && !projectile.minion && !projectile.sentry && !projectile.bobber)
             {
                 int x = (int)(projectile.Center.X / 16);
                 int y = (int)(projectile.Center.Y / 16);
@@ -73,6 +72,26 @@ namespace CrowdControlMod.Projectiles
             }
 
             base.Kill(projectile, timeLeft);
+        }
+
+        // Called before the projectile is killed
+        public override bool PreKill(Projectile projectile, int timeLeft)
+        {
+            // Prevent bombs from destroying tiles
+            if (CrowdControlMod._server.m_shootBombTimer.Enabled && (projectile.type == Terraria.ID.ProjectileID.Bomb || projectile.type == Terraria.ID.ProjectileID.StickyBomb ||
+                projectile.type == Terraria.ID.ProjectileID.BouncyBomb || projectile.type == Terraria.ID.ProjectileID.Dynamite || projectile.type == Terraria.ID.ProjectileID.BouncyDynamite))
+            {
+                // Play sound and create particles
+                Main.PlaySound(Terraria.ID.SoundID.Item14, projectile.position);
+                for (int i = 0; i < 50; i++)
+                {
+                    int dustIndex = Dust.NewDust(new Vector2(projectile.position.X, projectile.position.Y), projectile.width, projectile.height, 31, 0f, 0f, 100, default, 2f);
+                    Main.dust[dustIndex].velocity *= 1.4f;
+                }
+                return false;
+            }
+
+            return base.PreKill(projectile, timeLeft);
         }
     }
 }

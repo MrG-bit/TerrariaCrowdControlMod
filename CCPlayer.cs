@@ -141,20 +141,20 @@ namespace CrowdControlMod
                 if (CrowdControlMod._server.m_shootBombTimer.Enabled && !m_explosives.Contains((short)item.shoot))
                 {
                     int r = Main.rand.Next(100);
-                    short id;
-                    if (r < 3) id = ProjectileID.BouncyDynamite;
-                    else if (r < 6) id = ProjectileID.Dynamite;
-                    else if (r < 9) id = ProjectileID.BouncyBomb;
-                    else if (r < 12) id = ProjectileID.StickyBomb;
-                    else if (r < 15) id = ProjectileID.Bomb;
-                    else if (r < 30) id = ProjectileID.Beenade;
-                    else if (r < 45) id = ProjectileID.StickyGrenade;
-                    else if (r < 60) id = ProjectileID.BouncyGrenade;
-                    else if (r < 75) id = ProjectileID.PartyGirlGrenade;
-                    else if (r < 87) id = ProjectileID.RocketIII;
-                    else id = ProjectileID.Grenade;
+                    short explosiveType;
+                    if (r < 3) explosiveType = ProjectileID.BouncyDynamite;
+                    else if (r < 6) explosiveType = ProjectileID.Dynamite;
+                    else if (r < 9) explosiveType = ProjectileID.BouncyBomb;
+                    else if (r < 12) explosiveType = ProjectileID.StickyBomb;
+                    else if (r < 15) explosiveType = ProjectileID.Bomb;
+                    else if (r < 30) explosiveType = ProjectileID.Beenade;
+                    else if (r < 45) explosiveType = ProjectileID.StickyGrenade;
+                    else if (r < 60) explosiveType = ProjectileID.BouncyGrenade;
+                    else if (r < 75) explosiveType = ProjectileID.PartyGirlGrenade;
+                    else if (r < 87) explosiveType = ProjectileID.RocketIII;
+                    else explosiveType = ProjectileID.Grenade;
                     
-                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), id, damage, knockBack, Main.myPlayer);
+                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), explosiveType, damage, knockBack, Main.myPlayer);
                     return false;
                 }
 

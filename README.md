@@ -18,7 +18,8 @@ Alternatively, the mod can be downloaded manually from the [Releases](https://gi
 * Increase movement speed / jump height
 * Teleport the player
 * Reforge weapons and tools
-* Shoot bombs instead of bullets
+* Shoot explosives
+* Randomise projectile graphics
 * Drop the player's items
 * Give the player coins
 * Spawn mobs

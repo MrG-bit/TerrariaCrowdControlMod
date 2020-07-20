@@ -7,8 +7,6 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Runtime.InteropServices;
 using Terraria;
 using Terraria.ModLoader;
 

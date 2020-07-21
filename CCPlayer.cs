@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-19
+/// Last Updated: 2020-07-21
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -10,6 +10,7 @@ using Terraria;
 using Terraria.ModLoader;
 using Terraria.ID;
 using System.Collections.Generic;
+using Terraria.DataStructures;
 
 namespace CrowdControlMod
 {
@@ -34,6 +35,8 @@ namespace CrowdControlMod
         public float m_spawnRate = 1f;                              // NPC spawnrate for this player
         public bool m_servSpeed = false;                            // Whether player movement speed is increased (server-side)
         public bool m_servJump = false;                             // Whether player jump boost is increased (server-side)
+        public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
+        private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -174,6 +177,20 @@ namespace CrowdControlMod
             if (Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_shootBombTimer.Enabled)
                     return false;
             return base.ConsumeAmmo(weapon, ammo);
+        }
+
+        // Called when the player is killed
+        public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
+        {
+            // Reduce respawn timer
+            if (m_reduceRespawn)
+            {
+                player.respawnTimer = m_reducedCooldown;
+                m_reduceRespawn = false;
+                TDebug.WriteDebug("Reduced respawn timer to " + player.respawnTimer, Color.Yellow);
+            }
+
+            base.Kill(damage, hitDirection, pvp, damageSource);
         }
 
         // Give the player coins (extracted from the Terraria source code)

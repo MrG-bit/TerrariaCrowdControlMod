@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-19
+/// Last Updated: 2020-07-21
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -210,11 +210,8 @@ namespace CrowdControlMod
         public CCServer()
         {
             // Ignore silent exceptions thrown by Socket.Connect (cleaner chat during testing)
-            if (TDebug.IN_DEBUG)
-            {
-                Logging.IgnoreExceptionContents("System.Net.Sockets.Socket.Connect");
-                Logging.IgnoreExceptionContents("System.Net.Sockets.Socket.DoConnect");
-            }
+            Logging.IgnoreExceptionContents("System.Net.Sockets.Socket.Connect");
+            Logging.IgnoreExceptionContents("System.Net.Sockets.Socket.DoConnect");
 
             // Set readonly colours
             MSG_C_NEGATIVE = Color.Red;
@@ -436,9 +433,9 @@ namespace CrowdControlMod
         private EffectResult ProcessEffect(string code, string viewer, int requestType)
         {
             // Only process the request if the game is not paused
-            if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer && Main.gamePaused && requestType != (int)RequestType.STOP)
+            if ((Main.gamePaused || Main.player[Main.myPlayer].dead) && requestType != (int)RequestType.STOP)
             {
-                TDebug.WriteDebug("Game is paused. Will retry [" + code + "]", Color.Yellow);
+                TDebug.WriteDebug("Game is paused or player is dead. Will retry [" + code + "]", Color.Yellow);
                 return EffectResult.RETRY;
             }
 
@@ -455,7 +452,8 @@ namespace CrowdControlMod
             switch (code)
             {
                 case "killplr":
-                    m_player.player.KillMe(
+					m_player.m_reduceRespawn = true;
+					m_player.player.KillMe(
                         Terraria.DataStructures.PlayerDeathReason.ByCustomReason(m_player.player.name + " was " + (m_killVerb[Main.rand.Next(m_killVerb.Length)]) + " by " + viewer + "."),
                         1000, 0, false);
                     break;
@@ -550,6 +548,7 @@ namespace CrowdControlMod
                 case "sp_guard":
 					int px = (int)m_player.player.position.X;
 					int py = (int)m_player.player.position.Y;
+					m_player.m_reduceRespawn = true;
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py + m_spawnGuardYOffset, Terraria.ID.NPCID.DungeonGuardian);
 					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, px, py);
                     TDebug.WriteMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
@@ -641,7 +640,7 @@ namespace CrowdControlMod
                     if (!Filters.Scene["FlipVertical"].IsActive())
                         Filters.Scene.Activate("FlipVertical").GetShader();
 					ResetTimer(m_flipCameraTimer);
-                    TDebug.WriteMessage(viewer + " turned the world upside down for " + m_timeFlipScreen + " seconds", MSG_C_NEGATIVE);
+                    TDebug.WriteMessage(395, viewer + " turned the world upside down for " + m_timeFlipScreen + " seconds", MSG_C_NEGATIVE);
                     break;
 
 				case "cam_fish":

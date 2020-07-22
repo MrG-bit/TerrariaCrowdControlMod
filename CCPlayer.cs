@@ -90,6 +90,16 @@ namespace CrowdControlMod
             base.SetControls();
         }
 
+        // Modify how the player is drawn
+        public override void ModifyDrawInfo(ref PlayerDrawInfo drawInfo)
+        {
+            // Make the player invisible by drawing the player somewhere else
+            if (CrowdControlMod._server != null && CrowdControlMod._server.IsRunning && CrowdControlMod._server.m_invisTimer.Enabled)
+                drawInfo.position = Vector2.Zero;
+
+            base.ModifyDrawInfo(ref drawInfo);
+        }
+
         // Called at the end of each player update
         public override void PostUpdate()
         {

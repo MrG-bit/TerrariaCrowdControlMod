@@ -135,6 +135,7 @@ namespace CrowdControlMod
 		public readonly Timer m_shootGrenadeTimer = null;
 		public readonly Timer m_projItemTimer = null;
 		public readonly Timer m_increasedSpawnsTimer = null;
+		public readonly Timer m_invisTimer = null;
 		public readonly Timer m_flipCameraTimer = null;
 		public readonly Timer m_fishWallTimer = null;
 
@@ -152,6 +153,7 @@ namespace CrowdControlMod
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
+		public readonly int m_timeBuffInvis = 25;
 		public readonly int m_timeBuffIron = 60;
 		public readonly int m_timeBuffRegen = 60;
 		public readonly int m_timeBuffLight = 60;
@@ -317,7 +319,14 @@ namespace CrowdControlMod
                 };
                 m_increasedSpawnsTimer.Elapsed += delegate { StopEffect("inc_spawnrate"); };
 
-                m_flipCameraTimer = new Timer
+				m_invisTimer = new Timer
+				{
+					Interval = 1000 * m_timeBuffInvis,
+					AutoReset = false
+				};
+				m_invisTimer.Elapsed += delegate { StopEffect("buff_invis"); };
+
+				m_flipCameraTimer = new Timer
                 {
                     Interval = 1000 * m_timeFlipScreen,
                     AutoReset = false
@@ -385,6 +394,8 @@ namespace CrowdControlMod
 				StopEffect("proj_item");
             if (m_increasedSpawnsTimer.Enabled)
                 StopEffect("inc_spawnrate");
+			if (m_invisTimer.Enabled)
+				StopEffect("buff_invis");
             if (m_flipCameraTimer.Enabled)
                 StopEffect("cam_flip");
 			if (m_fishWallTimer.Enabled)
@@ -616,6 +627,12 @@ namespace CrowdControlMod
 					Effect_GivePet(viewer);
 					break;
 
+				case "plr_gender":
+					m_player.player.Male = !m_player.player.Male;
+					Main.PlaySound(Terraria.ID.SoundID.Item6, m_player.player.position);
+					ShowEffectMessage(2756, viewer + " changed " + m_player.player.name + " to a " + (m_player.player.Male ? "boy" : "girl"), MSG_C_NEUTRAL);
+					break;
+
 				case "tile_paint":
 					if (m_rainbowPaintTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_rainbowPaintTimer);
@@ -631,7 +648,7 @@ namespace CrowdControlMod
 					break;
 
 				case "shoot_grenade":
-					if (m_shootBombTimer.Enabled) return EffectResult.RETRY;
+					if (m_shootGrenadeTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_shootGrenadeTimer);
 					ShowEffectMessage(168, "Shooting grenades for " + m_timeShootGrenade + " seconds thanks to " + viewer, MSG_C_NEUTRAL);
 					break;
@@ -706,7 +723,13 @@ namespace CrowdControlMod
                     ShowEffectMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
-                case "buff_iron":
+				case "buff_invis":
+					if (m_invisTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_invisTimer);
+					ShowEffectMessage(1752, viewer + " stole " + m_player.player.name + "'s body for " + m_timeBuffInvis + " seconds O-o", MSG_C_NEGATIVE);
+					break;
+
+				case "buff_iron":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Ironskin, Terraria.ID.BuffID.Endurance)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Ironskin, 60 * m_timeBuffIron, true);
                     m_player.player.AddBuff(Terraria.ID.BuffID.Endurance, 60 * m_timeBuffIron, true);
@@ -851,6 +874,11 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = 1f;
 					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, 1f);
                     ShowEffectMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
+					break;
+
+				case "buff_invis":
+					m_invisTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Player is no longer invisible", MSG_C_TIMEREND);
 					break;
 
                 case "cam_flip":

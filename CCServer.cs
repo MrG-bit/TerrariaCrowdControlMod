@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-22
+/// Last Updated: 2020-07-23
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -16,7 +16,6 @@ using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
-using System.Security.Cryptography.X509Certificates;
 
 namespace CrowdControlMod
 {
@@ -149,7 +148,7 @@ namespace CrowdControlMod
 		public readonly int m_timeProjItem = 45;
 		public readonly int m_timeIncSpawnrate = 30;
 		public readonly int m_timeBuffFreeze = 3;
-		public readonly int m_timeBuffFire = 15;
+		public readonly int m_timeBuffFire = 10;
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
@@ -239,6 +238,8 @@ namespace CrowdControlMod
         private System.Threading.Thread m_serverThread = null;				// Reference to the thread running the server loop
         private Socket m_activeSocket = null;								// Reference to the socket being used to communicate with Crowd Control
         private CCPlayer m_player = null;                                   // Reference to the ModPlayer instance affected by Crowd Control effects
+		public static bool _showEffectMessages = true;                      // Whether to show effect messages in chat
+		public static bool _shouldConnectToCC = true;						// Whether to connect to crowd control
 
         #endregion
 
@@ -399,9 +400,21 @@ namespace CrowdControlMod
             Main.rand = new Terraria.Utilities.UnifiedRandom();
             bool writeAttempt = true;
             bool connected = false;
+			bool shouldNotConnectText = true;
 
             while (true)
             {
+				if (!_shouldConnectToCC)
+                {
+					if (shouldNotConnectText)
+                    {
+						TDebug.WriteMessage(3643, "Crowd Control disabled in Mod Configuration", Color.Green);
+						shouldNotConnectText = false;
+                    }
+					System.Threading.Thread.Sleep(1000 * 2);
+					continue;
+                }
+
                 m_activeSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 try { m_activeSocket.Connect("127.0.0.1", 58430); connected = true; }
                 catch (System.Threading.ThreadAbortException e) { throw e; }
@@ -521,33 +534,37 @@ namespace CrowdControlMod
 					break;
 
 				case "healplr":
+					if (m_player.player.statLife == m_player.player.statLifeMax2) return EffectResult.FAILURE;
 					m_player.player.statLife = m_player.player.statLifeMax2;
-                    TDebug.WriteMessage(29, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
+                    ShowEffectMessage(29, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
                 case "damplr":
 					int life = (int)(m_player.player.statLife * (m_damagePlayerPerc + Main.rand.NextFloat(-m_damagePlayerPercPM, m_damagePlayerPercPM)));
 					m_player.player.statLife = life;
-					TDebug.WriteMessage(3106, viewer + " severely damaged " + m_player.player.name, MSG_C_NEGATIVE);
+					ShowEffectMessage(3106, viewer + " severely damaged " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 
 				case "fastplr":
+					if (m_fastPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_fastPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendDataToServer(EPacketEffect.SET_SPEED, true);
-					TDebug.WriteMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
+					ShowEffectMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "jumpplr":
+					if (m_jumpPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_jumpPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendDataToServer(EPacketEffect.SET_JUMP, true);
-					TDebug.WriteMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
+					ShowEffectMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "slipplr":
+					if (m_slipPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_slipPlayerTimer);
-					TDebug.WriteMessage(950, viewer + " made the ground very slippery", MSG_C_NEGATIVE);
+					ShowEffectMessage(950, viewer + " made the ground very slippery", MSG_C_NEGATIVE);
 					break;
 
 				case "randtp":
@@ -558,16 +575,16 @@ namespace CrowdControlMod
 						m_player.player.TeleportationPotion();
 						Main.PlaySound(Terraria.ID.SoundID.Item6, m_player.player.position);
 					}
-					TDebug.WriteMessage(2351, viewer + " randomly teleported " + m_player.player.name, MSG_C_NEUTRAL);
+					ShowEffectMessage(2351, viewer + " randomly teleported " + m_player.player.name, MSG_C_NEUTRAL);
                     break;
 
 				case "deathtp":
 					if (m_player.TeleportToDeathPoint())
-						TDebug.WriteMessage(1326, viewer + " sent " + m_player.player.name + " back to their last death position", MSG_C_NEUTRAL);
+						ShowEffectMessage(1326, viewer + " sent " + m_player.player.name + " back to their last death position", MSG_C_NEUTRAL);
 					else
 					{
 						m_player.player.Spawn();
-						TDebug.WriteMessage(1326, viewer + " sent " + m_player.player.name + " to spawn because there is no valid death position", MSG_C_NEUTRAL);
+						ShowEffectMessage(1326, viewer + " sent " + m_player.player.name + " to spawn because there is no valid death position", MSG_C_NEUTRAL);
 					}
 					break;
 
@@ -584,7 +601,7 @@ namespace CrowdControlMod
 				case "item_money":
 					int coins = Item.buyPrice(0, 0, Main.rand.Next(25, 100), 0);
 					m_player.GiveCoins(coins);
-					TDebug.WriteMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
+					ShowEffectMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
 				case "item_heal":
@@ -592,7 +609,7 @@ namespace CrowdControlMod
 					int id = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, itemID, m_potionStack);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1f);
-					TDebug.WriteMessage(itemID, viewer + " gave " + m_player.player.name + " " + m_potionStack + " " + Main.item[id].Name + "s", MSG_C_POSITIVE);
+					ShowEffectMessage(itemID, viewer + " gave " + m_player.player.name + " " + m_potionStack + " " + Main.item[id].Name + "s", MSG_C_POSITIVE);
 					break;
 
 				case "item_pet":
@@ -600,30 +617,31 @@ namespace CrowdControlMod
 					break;
 
 				case "tile_paint":
-					if (!m_rainbowPaintTimer.Enabled)
-					{
-						m_rainbowIndex = Main.rand.Next(m_rainbowPaint.Length);
-						m_rainbowTiles.Clear();
-					}
+					if (m_rainbowPaintTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_rainbowPaintTimer);
-					TDebug.WriteMessage(662, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
+					m_rainbowIndex = Main.rand.Next(m_rainbowPaint.Length);
+					m_rainbowTiles.Clear();
+					ShowEffectMessage(662, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "shoot_bomb":
+					if (m_shootBombTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_shootBombTimer);
-                    TDebug.WriteMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
+                    ShowEffectMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
 					break;
 
 				case "shoot_grenade":
+					if (m_shootBombTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_shootGrenadeTimer);
-					TDebug.WriteMessage(168, "Shooting grenades for " + m_timeShootGrenade + " seconds thanks to " + viewer, MSG_C_NEUTRAL);
+					ShowEffectMessage(168, "Shooting grenades for " + m_timeShootGrenade + " seconds thanks to " + viewer, MSG_C_NEUTRAL);
 					break;
 
 				case "proj_item":
+					if (m_projItemTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_projItemTimer);
-					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
+					ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
 					//Items.ModGlobalItem.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
-					TDebug.WriteMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
+					ShowEffectMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "sp_house":
@@ -642,7 +660,7 @@ namespace CrowdControlMod
 					Point spawnPos = new Point((int)m_player.player.position.X + (int)circlePos.X, (int)m_player.player.position.Y + (int)circlePos.Y);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_guardians.Add(new Tuple<int, int>(NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian), m_guardianSurvivalTime));
 					else SendDataToServer(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
-                    TDebug.WriteMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
+                    ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
 
                 case "sp_bunny":
@@ -650,122 +668,132 @@ namespace CrowdControlMod
                     break;
 
                 case "inc_spawnrate":
+					if (m_increasedSpawnsTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_increasedSpawnsTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = m_increaseSpawnRate;
 					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
-                    TDebug.WriteMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
+                    ShowEffectMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
                     break;
 
 				case "buff_freeze":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Frozen)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Frozen, 60 * m_timeBuffFreeze, true);
-					TDebug.WriteMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
+					ShowEffectMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 
 				case "buff_fire":
+					if (m_player.HasBuff(Terraria.ID.BuffID.OnFire)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.OnFire, 60 * m_timeBuffFire, true);
 					Projectile.NewProjectile(m_player.player.position, new Vector2(0f, 10f), Terraria.ID.ProjectileID.MolotovCocktail, 1, 1f, Main.myPlayer);
-					TDebug.WriteMessage(2590, viewer + " threw a molotov at " + m_player.player.name + "'s feet", MSG_C_NEGATIVE);
+					ShowEffectMessage(2590, viewer + " threw a molotov at " + m_player.player.name + "'s feet", MSG_C_NEGATIVE);
 					break;
 
 				case "buff_daze":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Dazed)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Dazed, 60 * m_timeBuffDaze, true);
-                    TDebug.WriteMessage(75, viewer + " dazed " + m_player.player.name, MSG_C_NEGATIVE);
+                    ShowEffectMessage(75, viewer + " dazed " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
                 case "buff_lev":
+					if (m_player.HasBuff(Terraria.ID.BuffID.VortexDebuff)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.VortexDebuff, 60 * m_timeBuffLev, true);
-                    TDebug.WriteMessage(3456, viewer + " distorted gravity around " + m_player.player.name, MSG_C_NEGATIVE);
+                    ShowEffectMessage(3456, viewer + " distorted gravity around " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
                 case "buff_confuse":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Confused)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Confused, 60 * m_timeBuffConf, true);
-                    TDebug.WriteMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
+                    ShowEffectMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
                 case "buff_iron":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Ironskin, Terraria.ID.BuffID.Endurance)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Ironskin, 60 * m_timeBuffIron, true);
                     m_player.player.AddBuff(Terraria.ID.BuffID.Endurance, 60 * m_timeBuffIron, true);
-                    TDebug.WriteMessage(292, viewer + " provided " + m_player.player.name + " with survivability buffs", MSG_C_POSITIVE);
+                    ShowEffectMessage(292, viewer + " provided " + m_player.player.name + " with survivability buffs", MSG_C_POSITIVE);
                     break;
 
                 case "buff_regen":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Regeneration, Terraria.ID.BuffID.ManaRegeneration)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Regeneration, 60 * m_timeBuffRegen, true);
                     m_player.player.AddBuff(Terraria.ID.BuffID.ManaRegeneration, 60 * m_timeBuffRegen, true);
-                    TDebug.WriteMessage(289, viewer + " provided " + m_player.player.name + " with regeneration buffs", MSG_C_POSITIVE);
+                    ShowEffectMessage(289, viewer + " provided " + m_player.player.name + " with regeneration buffs", MSG_C_POSITIVE);
                     break;
 
 				case "buff_light":
+					if (m_player.HasBuff(Terraria.ID.BuffID.NightOwl, Terraria.ID.BuffID.Shine)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.NightOwl, 60 * m_timeBuffLight, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Shine, 60 * m_timeBuffLight, true);
-					TDebug.WriteMessage(3043, viewer + " provided " + m_player.player.name + " with light", MSG_C_POSITIVE);
+					ShowEffectMessage(3043, viewer + " provided " + m_player.player.name + " with light", MSG_C_POSITIVE);
 					break;
 
 				case "buff_treasure":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Spelunker, Terraria.ID.BuffID.Hunter, Terraria.ID.BuffID.Dangersense)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Spelunker, 60 * m_timeBuffTreasure, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Hunter, 60 * m_timeBuffTreasure, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Dangersense, 60 * m_timeBuffTreasure, true);
-					TDebug.WriteMessage(306, viewer + " helped " + m_player.player.name + " to search for treasure", MSG_C_POSITIVE);
+					ShowEffectMessage(306, viewer + " helped " + m_player.player.name + " to search for treasure", MSG_C_POSITIVE);
 					break;
 
 				case "buff_life":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Lifeforce)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife, true);
-                    TDebug.WriteMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
+                    ShowEffectMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
 				case "buff_move":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Swiftness, Terraria.ID.BuffID.SugarRush, Terraria.ID.BuffID.Panic)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed, true);
-					TDebug.WriteMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
+					ShowEffectMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
 				case "inc_time":
-					if (Main.fastForwardTime)
-					{
-						TDebug.WriteDebug("Time is already advancing - will retry", Color.Yellow);
-						return EffectResult.RETRY;
-					}
-
+					if (Main.fastForwardTime) return EffectResult.RETRY;
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) Main.fastForwardTime = true;
 					else SendDataToServer(EPacketEffect.START_SUNDIAL);
-					TDebug.WriteMessage(3064, viewer + " advanced time to sunrise", MSG_C_NEUTRAL);
+					ShowEffectMessage(3064, viewer + " advanced time to sunrise", MSG_C_NEUTRAL);
                     break;
 
                 case "time_noon":
 					SetTime(27000, true);
-					TDebug.WriteMessage(3733, viewer + " set the time to noon", MSG_C_NEUTRAL);
+					ShowEffectMessage(3733, viewer + " set the time to noon", MSG_C_NEUTRAL);
                     break;
 
                 case "time_midnight":
 					SetTime(16200, false);
-					TDebug.WriteMessage(485, viewer + " set the time to midnight", MSG_C_NEUTRAL);
+					ShowEffectMessage(485, viewer + " set the time to midnight", MSG_C_NEUTRAL);
                     break;
 
                 case "time_sunrise":
 					SetTime(0, true);
-					TDebug.WriteMessage(3733, viewer + " set the time to sunrise", MSG_C_NEUTRAL);
+					ShowEffectMessage(3733, viewer + " set the time to sunrise", MSG_C_NEUTRAL);
                     break;
 
                 case "time_sunset":
 					SetTime(0, false);
-					TDebug.WriteMessage(485, viewer + " set the time to sunset", MSG_C_NEUTRAL);
+					ShowEffectMessage(485, viewer + " set the time to sunset", MSG_C_NEUTRAL);
                     break;
 
                 case "cam_flip":
+					if (m_flipCameraTimer.Enabled) return EffectResult.RETRY;
                     if (!Filters.Scene["FlipVertical"].IsActive())
                         Filters.Scene.Activate("FlipVertical").GetShader();
 					ResetTimer(m_flipCameraTimer);
-                    TDebug.WriteMessage(395, viewer + " turned the world upside down for " + m_timeFlipScreen + " seconds", MSG_C_NEGATIVE);
+                    ShowEffectMessage(395, viewer + " turned the world upside down for " + m_timeFlipScreen + " seconds", MSG_C_NEGATIVE);
                     break;
 
 				case "cam_fish":
+					if (m_fishWallTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_fishWallTimer);
-					TDebug.WriteMessage(669, viewer + " covered the screen with fish for " + m_timeFishWall + " seconds", MSG_C_NEUTRAL);
+					ShowEffectMessage(669, viewer + " covered the screen with fish for " + m_timeFishWall + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "cam_darken":
+					if (m_player.HasBuff(Terraria.ID.BuffID.Obstructed)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Obstructed, 60 * m_timeDarkScreen, true);
-					TDebug.WriteMessage(1311, viewer + " darkened the screen for " + m_timeDarkScreen +" seconds", MSG_C_NEGATIVE);
+					ShowEffectMessage(1311, viewer + " darkened the screen for " + m_timeDarkScreen +" seconds", MSG_C_NEGATIVE);
 					break;
 
 			}
@@ -783,62 +811,69 @@ namespace CrowdControlMod
 					m_fastPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendDataToServer(EPacketEffect.SET_SPEED, false);
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "jumpplr":
 					m_jumpPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendDataToServer(EPacketEffect.SET_JUMP, false);
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "slipplr":
 					m_slipPlayerTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Ground is no longer slippery", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Ground is no longer slippery", MSG_C_TIMEREND);
 					break;
 
 				case "tile_paint":
 					m_rainbowPaintTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Rainbows are no longer forming", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Rainbows are no longer forming", MSG_C_TIMEREND);
 					break;
 
 				case "shoot_bomb":
                     m_shootBombTimer.Stop();
-                    TDebug.WriteMessage(MSG_ITEM_TIMEREND, "No longer shooting explosives", MSG_C_TIMEREND);
+                    ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer shooting explosives", MSG_C_TIMEREND);
                     break;
 
 				case "shoot_grenade":
 					m_shootGrenadeTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "No longer shooting grenades", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer shooting grenades", MSG_C_TIMEREND);
 					break;
 
 				case "proj_item":
 					m_projItemTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Projecitle sprites are no longer randomised", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Projecitle sprites are no longer randomised", MSG_C_TIMEREND);
 					break;
 
 				case "inc_spawnrate":
                     m_increasedSpawnsTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = 1f;
 					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, 1f);
-                    TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
+                    ShowEffectMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
 					break;
 
                 case "cam_flip":
                     if (Filters.Scene["FlipVertical"].IsActive())
                         Filters.Scene.Deactivate("FlipVertical");
                     m_flipCameraTimer.Stop();
-                    TDebug.WriteMessage(MSG_ITEM_TIMEREND, "World is no longer flipped", MSG_C_TIMEREND);
+                    ShowEffectMessage(MSG_ITEM_TIMEREND, "World is no longer flipped", MSG_C_TIMEREND);
                     break;
 
 				case "cam_fish":
 					m_fishWallTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Fish is no longer covering the screen", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Fish is no longer covering the screen", MSG_C_TIMEREND);
 					break;
 			}
 
             return EffectResult.SUCCESS;
+        }
+
+		// Attempt to show an effect message in chat
+		private void ShowEffectMessage(int itemType, string text, Color colour)
+        {
+			if (_showEffectMessages)
+				TDebug.WriteMessage(itemType, text, colour);
         }
 
 		/// Reset timer
@@ -883,9 +918,9 @@ namespace CrowdControlMod
             }
 
             if (droppedItem.stack > 1)
-                TDebug.WriteMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop " + droppedItem.stack + " " + droppedItem.Name + "s", MSG_C_NEGATIVE);
+                ShowEffectMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop " + droppedItem.stack + " " + droppedItem.Name + "s", MSG_C_NEGATIVE);
             else
-                TDebug.WriteMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop their " + droppedItem.Name, MSG_C_NEGATIVE);
+                ShowEffectMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop their " + droppedItem.Name, MSG_C_NEGATIVE);
 
             return EffectResult.SUCCESS;
         }
@@ -943,7 +978,7 @@ namespace CrowdControlMod
 				string prefixName = Lang.prefix[newItem.prefix].Value;
 				if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 					NetMessage.SendData(Terraria.ID.MessageID.SyncEquipment, -1, -1, null, Main.myPlayer, m_player.player.selectedItem, newItem.stack, newItem.prefix, newItem.netID);
-				TDebug.WriteMessage(affectedItem.type, viewer + " changed " + m_player.player.name + "'s " + affectedItem.Name + " to be " + prefixName, MSG_C_NEUTRAL);
+				ShowEffectMessage(affectedItem.type, viewer + " changed " + m_player.player.name + "'s " + affectedItem.Name + " to be " + prefixName, MSG_C_NEUTRAL);
 			}
 			else
 			{
@@ -964,7 +999,7 @@ namespace CrowdControlMod
 			m_prevPets.Add(id);
 			m_player.player.AddBuff(id, 1);
 			m_player.m_petID = id;
-			TDebug.WriteMessage(1927, viewer + " provided " + m_player.player.name + " with a " + Lang.GetBuffName(id), MSG_C_POSITIVE);
+			ShowEffectMessage(1927, viewer + " provided " + m_player.player.name + " with a " + Lang.GetBuffName(id), MSG_C_POSITIVE);
 		}
 
         // Generate a structure around the player depending on their biome
@@ -978,34 +1013,34 @@ namespace CrowdControlMod
 
                 if (player.ZoneCorrupt || player.ZoneCrimson)
                 {
-                    TDebug.WriteMessage(viewer + " generated a deep chasm below " + player.name, MSG_C_NEUTRAL);
+                    ShowEffectMessage(0, viewer + " generated a deep chasm below " + player.name, MSG_C_NEUTRAL);
                     WorldGen.ChasmRunner(x, y, Main.rand.Next(12, 24), false);
                 }
                 else if (y > Main.worldSurface && player.ZoneJungle)
                 {
-                    TDebug.WriteMessage(viewer + " generated a bee hive surrounding " + player.name, MSG_C_NEUTRAL);
+                    ShowEffectMessage(0, viewer + " generated a bee hive surrounding " + player.name, MSG_C_NEUTRAL);
                     WorldGen.Hive(x, y);
                 }
                 else if (player.ZoneUnderworldHeight)
                 {
-                    TDebug.WriteMessage(viewer + " generated a hell fortress around " + player.name, MSG_C_NEUTRAL);
+                    ShowEffectMessage(0, viewer + " generated a hell fortress around " + player.name, MSG_C_NEUTRAL);
                     WorldGen.HellFort(x, y);
                 }
                 else if (y < Main.worldSurface - 220)
                 {
-					TDebug.WriteMessage(viewer + " generated a sky island house around " + player.name, MSG_C_NEUTRAL);
+					ShowEffectMessage(0, viewer + " generated a sky island house around " + player.name, MSG_C_NEUTRAL);
 					WorldGen.IslandHouse(x, y);
 				}
                 else if (y > Main.worldSurface)
                 {
-                    TDebug.WriteMessage(viewer + " generated an abandoned house around " + player.name, MSG_C_NEUTRAL);
+                    ShowEffectMessage(0, viewer + " generated an abandoned house around " + player.name, MSG_C_NEUTRAL);
                     WorldGen.MineHouse(x, y);
                 }
                 else
                 {
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					{
-						TDebug.WriteMessage(viewer + " generated a huge living tree around " + player.name, MSG_C_NEUTRAL);
+						ShowEffectMessage(0, viewer + " generated a huge living tree around " + player.name, MSG_C_NEUTRAL);
 						try
 						{
 							GrowLivingTree(x, y);
@@ -1016,7 +1051,7 @@ namespace CrowdControlMod
 					}
 					else
 					{
-						TDebug.WriteMessage(viewer + " generated an abandoned house around " + player.name, MSG_C_NEUTRAL);
+						ShowEffectMessage(0, viewer + " generated an abandoned house around " + player.name, MSG_C_NEUTRAL);
 						WorldGen.MineHouse(x, y);
 					}
                 }
@@ -1057,21 +1092,21 @@ namespace CrowdControlMod
 				type = WorldGen.crimson ? Terraria.ID.NPCID.CrimsonBunny : Terraria.ID.NPCID.CorruptBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
 				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
-				TDebug.WriteMessage(1338, viewer + " spawned an Evil Bunny", MSG_C_NEGATIVE);
+				ShowEffectMessage(1338, viewer + " spawned an Evil Bunny", MSG_C_NEGATIVE);
             }
             else if (Main.rand.Next(0, 100) < 5)
             {
 				type = Terraria.ID.NPCID.GoldBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
 				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
-                TDebug.WriteMessage(2890, viewer + " spawned a Gold Bunny", MSG_C_POSITIVE);
+                ShowEffectMessage(2890, viewer + " spawned a Gold Bunny", MSG_C_POSITIVE);
             }
             else
             {
                 type = Main.rand.Next(new short[] { Terraria.ID.NPCID.Bunny, Terraria.ID.NPCID.BunnySlimed, Terraria.ID.NPCID.BunnyXmas, Terraria.ID.NPCID.PartyBunny });
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
 				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
-                TDebug.WriteMessage(2019, viewer + " spawned a Bunny", MSG_C_NEUTRAL);
+                ShowEffectMessage(2019, viewer + " spawned a Bunny", MSG_C_NEUTRAL);
             }
         }
 

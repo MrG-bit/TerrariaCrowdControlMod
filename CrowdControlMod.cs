@@ -1,6 +1,6 @@
 ///<summary>
 /// File: CrowdControlMod.cs
-/// Last Updated: 2020-07-16
+/// Last Updated: 2020-07-23
 /// Author: MRG-bit
 /// Description: Main mod file
 ///</summary>

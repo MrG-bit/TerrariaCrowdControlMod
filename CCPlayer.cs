@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-22
+/// Last Updated: 2020-07-23
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -9,10 +9,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
 using Terraria.ID;
-using System.Collections.Generic;
 using Terraria.DataStructures;
-using Terraria.ModLoader.UI.ModBrowser;
-using Steamworks;
 
 namespace CrowdControlMod
 {
@@ -321,6 +318,15 @@ namespace CrowdControlMod
             int px = (int)(player.position.X / 16);
             int py = (int)(player.position.Y / 16);
             return Main.tileSolid[Main.tile[px, py + 4].type] && player.velocity.Y == 0f;
+        }
+
+        // Check if the player the given buffs active
+        public bool HasBuff(params int[] buffs)
+        {
+            for (int i = 0; i < buffs.Length; ++i)
+                if (!player.HasBuff(buffs[i]))
+                    return false;
+            return true;
         }
     }
 }

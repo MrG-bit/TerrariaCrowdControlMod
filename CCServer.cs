@@ -183,7 +183,8 @@ namespace CrowdControlMod
 		};
 		private int m_rainbowIndex = 0;										// Index of the paint in the rainbowPaint array to use next
 		private readonly CyclicArray<Tile> m_rainbowTiles;					// Keep track of the tiles painted so the same tile is painted repeatedly
-		public readonly int m_spawnGuardYOffset = -150;						// Y offset from the player's Y that the dungeon guardian is spawned
+		public readonly int m_spawnGuardHalfHeight = 16 * 34;				//
+		public readonly int m_spawnGuardHalfWidth = 16 * 90;				//
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
 
@@ -547,11 +548,11 @@ namespace CrowdControlMod
                     break;
 
                 case "sp_guard":
-					int px = (int)m_player.player.position.X;
-					int py = (int)m_player.player.position.Y;
 					m_player.m_reduceRespawn = true;
-					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py + m_spawnGuardYOffset, Terraria.ID.NPCID.DungeonGuardian);
-					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, px, py);
+					Vector2 circlePos = Main.rand.NextVector2CircularEdge(m_spawnGuardHalfWidth, m_spawnGuardHalfHeight);
+					Point spawnPos = new Point((int)m_player.player.position.X + (int)circlePos.X, (int)m_player.player.position.Y + (int)circlePos.Y);
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian);
+					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
                     TDebug.WriteMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
 

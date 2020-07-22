@@ -130,6 +130,8 @@ namespace CrowdControlMod
         public readonly Timer m_fastPlayerTimer = null;
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_slipPlayerTimer = null;
+		public readonly Timer m_infiniteManaTimer = null;
+		public readonly Timer m_infiniteAmmoTimer = null;
 		public readonly Timer m_rainbowPaintTimer = null;
 		public readonly Timer m_shootBombTimer = null;
 		public readonly Timer m_shootGrenadeTimer = null;
@@ -143,6 +145,8 @@ namespace CrowdControlMod
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
 		public readonly int m_timeSlipPlayer = 25;
+		public readonly int m_timeInfiniteMana = 25;
+		public readonly int m_timeInfiniteAmmo = 25;
 		public readonly int m_timeRainbowPaint = 45;
 		public readonly int m_timeShootBomb = 20;
 		public readonly int m_timeShootGrenade = 30;
@@ -284,6 +288,20 @@ namespace CrowdControlMod
 				};
 				m_slipPlayerTimer.Elapsed += delegate { StopEffect("slipplr"); };
 
+				m_infiniteManaTimer = new Timer
+				{
+					Interval = 1000 * m_timeInfiniteMana,
+					AutoReset = false
+				};
+				m_infiniteManaTimer.Elapsed += delegate { StopEffect("plr_mana"); };
+
+				m_infiniteAmmoTimer = new Timer
+				{
+					Interval = 1000 * m_timeInfiniteAmmo,
+					AutoReset = false
+				};
+				m_infiniteAmmoTimer.Elapsed += delegate { StopEffect("plr_ammo"); };
+
 				m_rainbowPaintTimer = new Timer
 				{
 					Interval = 1000 * m_timeRainbowPaint,
@@ -384,6 +402,10 @@ namespace CrowdControlMod
 				StopEffect("jumpplr");
 			if (m_slipPlayerTimer.Enabled)
 				StopEffect("slipplr");
+			if (m_infiniteManaTimer.Enabled)
+				StopEffect("plr_mana");
+			if (m_infiniteAmmoTimer.Enabled)
+				StopEffect("plr_ammo");
 			if (m_rainbowPaintTimer.Enabled)
 				StopEffect("tile_paint");
             if (m_shootBombTimer.Enabled)
@@ -623,6 +645,18 @@ namespace CrowdControlMod
 					ShowEffectMessage(itemID, viewer + " gave " + m_player.player.name + " " + m_potionStack + " " + Main.item[id].Name + "s", MSG_C_POSITIVE);
 					break;
 
+				case "plr_mana":
+					if (m_infiniteManaTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_infiniteManaTimer);
+					ShowEffectMessage(109, viewer + " blessed " + m_player.player.name + " with infinite magical power for " + m_timeInfiniteMana + " seconds", MSG_C_POSITIVE);
+					break;
+
+				case "plr_ammo":
+					if (m_infiniteAmmoTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_infiniteAmmoTimer);
+					ShowEffectMessage(3103, viewer + " provided infinite ammo to " + m_player.player.name + " for " + m_timeInfiniteAmmo + " seconds", MSG_C_POSITIVE);
+					break;
+
 				case "item_pet":
 					Effect_GivePet(viewer);
 					break;
@@ -847,6 +881,16 @@ namespace CrowdControlMod
 				case "slipplr":
 					m_slipPlayerTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Ground is no longer slippery", MSG_C_TIMEREND);
+					break;
+
+				case "plr_mana":
+					m_infiniteManaTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer have infinite mana", MSG_C_TIMEREND);
+					break;
+
+				case "plr_ammo":
+					m_infiniteAmmoTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer have infinite ammo", MSG_C_TIMEREND);
 					break;
 
 				case "tile_paint":

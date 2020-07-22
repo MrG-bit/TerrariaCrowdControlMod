@@ -109,6 +109,10 @@ namespace CrowdControlMod
             {
                 if (CrowdControlMod._server != null)
                 {
+                    // Infinite mana
+                    if (CrowdControlMod._server.m_infiniteManaTimer.Enabled)
+                        player.statMana = player.statManaMax2;
+
                     // Rainbow-ify the tiles below the player
                     if (CrowdControlMod._server.m_rainbowPaintTimer.Enabled && player.velocity.Y == 0f)
                     {
@@ -231,7 +235,9 @@ namespace CrowdControlMod
         public override bool ConsumeAmmo(Item weapon, Item ammo)
         {
             if (Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_shootBombTimer.Enabled)
-                    return false;
+                return false;
+            if (Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_infiniteAmmoTimer.Enabled)
+                return false;
             return base.ConsumeAmmo(weapon, ammo);
         }
 

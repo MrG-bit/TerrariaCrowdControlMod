@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-21
+/// Last Updated: 2020-07-22
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -505,7 +505,7 @@ namespace CrowdControlMod
 					break;
 
 				case "item_money":
-					int coins = Item.buyPrice(0, 0, Main.rand.Next(1, 100), Main.rand.Next(1, 100));
+					int coins = Item.buyPrice(0, 0, Main.rand.Next(20, 80), 0);
 					m_player.GiveCoins(coins);
 					TDebug.WriteMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
 					break;
@@ -532,6 +532,7 @@ namespace CrowdControlMod
 				case "proj_item":
 					ResetTimer(m_projItemTimer);
 					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
+					//Items.ModGlobalItem.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
 					TDebug.WriteMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -690,7 +691,7 @@ namespace CrowdControlMod
 
 				case "proj_item":
 					m_projItemTimer.Stop();
-					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Projectiles are no longer randomised", MSG_C_TIMEREND);
+					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Projecitle sprites are no longer randomised", MSG_C_TIMEREND);
 					break;
 
 				case "inc_spawnrate":
@@ -760,7 +761,7 @@ namespace CrowdControlMod
             if (droppedItem.stack > 1)
                 TDebug.WriteMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop " + droppedItem.stack + " " + droppedItem.Name + "s", MSG_C_NEGATIVE);
             else
-                TDebug.WriteMessage(droppedItem.type, viewer + " caused" + m_player.player.name + " to fumble and drop their " + droppedItem.Name, MSG_C_NEGATIVE);
+                TDebug.WriteMessage(droppedItem.type, viewer + " caused " + m_player.player.name + " to fumble and drop their " + droppedItem.Name, MSG_C_NEGATIVE);
 
             return EffectResult.SUCCESS;
         }
@@ -815,7 +816,7 @@ namespace CrowdControlMod
 				newItem.favorited = affectedItem.favorited;
 				newItem.stack = affectedItem.stack;
 				m_player.player.inventory[m_player.player.selectedItem] = newItem;
-				string prefixName = Lang.prefix[prefix].Value; //Terraria.ID.PrefixID.GetUniqueKey((byte)prefix).Split(' ')[1];
+				string prefixName = Lang.prefix[newItem.prefix].Value;
 				if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 					NetMessage.SendData(Terraria.ID.MessageID.SyncEquipment, -1, -1, null, Main.myPlayer, m_player.player.selectedItem, newItem.stack, newItem.prefix, newItem.netID);
 				TDebug.WriteMessage(affectedItem.type, viewer + " changed " + m_player.player.name + "'s " + affectedItem.Name + " to be " + prefixName, MSG_C_NEUTRAL);

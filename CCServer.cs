@@ -146,10 +146,12 @@ namespace CrowdControlMod
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
-		public readonly int m_timeBuffIron = 120;
-		public readonly int m_timeBuffRegen = 120;
-		public readonly int m_timeBuffLife = 120;
-		public readonly int m_timeBuffSpeed = 120;
+		public readonly int m_timeBuffIron = 60;
+		public readonly int m_timeBuffRegen = 60;
+		public readonly int m_timeBuffLight = 60;
+		public readonly int m_timeBuffTreasure = 60;
+		public readonly int m_timeBuffLife = 60;
+		public readonly int m_timeBuffSpeed = 60;
 		public readonly int m_timeFlipScreen = 25;
 		public readonly int m_timeFishWall = 25;
 		public readonly int m_timeDarkScreen = 25;
@@ -641,7 +643,20 @@ namespace CrowdControlMod
                     TDebug.WriteMessage(289, viewer + " provided " + m_player.player.name + " with regeneration buffs", MSG_C_POSITIVE);
                     break;
 
-                case "buff_life":
+				case "buff_light":
+					m_player.player.AddBuff(Terraria.ID.BuffID.NightOwl, 60 * m_timeBuffLight, true);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Shine, 60 * m_timeBuffLight, true);
+					TDebug.WriteMessage(3043, viewer + " provided " + m_player.player.name + " with light", MSG_C_POSITIVE);
+					break;
+
+				case "buff_treasure":
+					m_player.player.AddBuff(Terraria.ID.BuffID.Spelunker, 60 * m_timeBuffTreasure, true);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Hunter, 60 * m_timeBuffTreasure, true);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Dangersense, 60 * m_timeBuffTreasure, true);
+					TDebug.WriteMessage(306, viewer + " helped " + m_player.player.name + " to search for treasure", MSG_C_POSITIVE);
+					break;
+
+				case "buff_life":
                     m_player.player.AddBuff(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife, true);
                     TDebug.WriteMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
                     break;

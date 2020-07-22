@@ -16,21 +16,30 @@ namespace CrowdControlMod
 {
     public class CCPlayer : ModPlayer
     {
-        private readonly static HashSet<short> m_explosives =       // Explosives that can be shot
-            new HashSet<short>()
+        private readonly static short[] m_explosives =              // Explosives that can be shot
         {
-            ProjectileID.Grenade,
-            ProjectileID.StickyGrenade,
-            ProjectileID.BouncyGrenade,
-            ProjectileID.Beenade,
-            ProjectileID.PartyGirlGrenade,
             ProjectileID.Bomb,
             ProjectileID.StickyBomb,
             ProjectileID.BouncyBomb,
             ProjectileID.Dynamite,
             ProjectileID.BouncyDynamite,
-            ProjectileID.RocketIII
         };
+        private readonly static short[] m_grenades =                // Grenades that can be shot
+        {
+            ProjectileID.Grenade,
+            ProjectileID.StickyGrenade,
+            ProjectileID.BouncyGrenade,
+            ProjectileID.Beenade,
+            ProjectileID.PartyGirlGrenade
+        };
+        private readonly static int m_minExplosiveDelay = 60;
+        private readonly static int m_maxExplosiveDelay = 80;
+        private readonly static int m_minGrenadeDelay = 15;
+        private readonly static int m_maxGrenadeDelay = 40;
+        private readonly static float m_minExplosiveSpd = 5f;
+        private readonly static float m_maxExplosiveSpd = 12f;
+        private int m_explosiveDelay = 0;
+        private int m_grenadeDelay = 0;
         private bool serverStartedViaControls = false;              // Whether server was started when joining a multiplayer server
         public float m_spawnRate = 1f;                              // NPC spawnrate for this player
         public bool m_servSpeed = false;                            // Whether player movement speed is increased (server-side)
@@ -94,6 +103,28 @@ namespace CrowdControlMod
                     CrowdControlMod._server.RainbowifyTileClient(x + 1, y + 3);
                 }
 
+                // Spawn bombs periodically
+                if (CrowdControlMod._server != null && CrowdControlMod._server.m_shootBombTimer.Enabled)
+                {
+                    m_explosiveDelay -= 1;
+                    if (m_explosiveDelay <= 0)
+                    {
+                        m_explosiveDelay = Main.rand.Next(m_minExplosiveDelay, m_maxExplosiveDelay);
+                        Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_explosives), 10, 1f, Main.myPlayer);
+                    }
+                }
+
+                // Spawn grenades periodically
+                if (CrowdControlMod._server != null && CrowdControlMod._server.m_shootGrenadeTimer.Enabled)
+                {
+                    m_grenadeDelay -= 1;
+                    if (m_grenadeDelay <= 0)
+                    {
+                        m_grenadeDelay = Main.rand.Next(m_minGrenadeDelay, m_maxGrenadeDelay);
+                        Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_grenades), 10, 1f, Main.myPlayer);
+                    }
+                }
+
                 // Manually start / stop the server if testing
                 if (TDebug.IN_DEBUG && player.selectedItem == 9 && player.justJumped)
                 {
@@ -135,29 +166,21 @@ namespace CrowdControlMod
             }
         }
 
+        // Called when the player respawns
+        public override void OnRespawn(Player player)
+        {
+            base.OnRespawn(player);
+        }
+
         // Called before the player creates a projectile
         public override bool Shoot(Item item, ref Vector2 position, ref float speedX, ref float speedY, ref int type, ref int damage, ref float knockBack)
         {
             if (Main.myPlayer == player.whoAmI)
             {
-                // Shoot an explosive instead of the intended projectile
-                if (CrowdControlMod._server.m_shootBombTimer.Enabled && !m_explosives.Contains((short)item.shoot))
+                // Shoot a grenade instead of the intended projectile
+                if (CrowdControlMod._server.m_shootGrenadeTimer.Enabled)
                 {
-                    int r = Main.rand.Next(100);
-                    short explosiveType;
-                    if (r < 3) explosiveType = ProjectileID.BouncyDynamite;
-                    else if (r < 6) explosiveType = ProjectileID.Dynamite;
-                    else if (r < 9) explosiveType = ProjectileID.BouncyBomb;
-                    else if (r < 12) explosiveType = ProjectileID.StickyBomb;
-                    else if (r < 15) explosiveType = ProjectileID.Bomb;
-                    else if (r < 30) explosiveType = ProjectileID.Beenade;
-                    else if (r < 45) explosiveType = ProjectileID.StickyGrenade;
-                    else if (r < 60) explosiveType = ProjectileID.BouncyGrenade;
-                    else if (r < 75) explosiveType = ProjectileID.PartyGirlGrenade;
-                    else if (r < 87) explosiveType = ProjectileID.RocketIII;
-                    else explosiveType = ProjectileID.Grenade;
-
-                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), explosiveType, damage, knockBack, Main.myPlayer);
+                    Projectile.NewProjectile(position, new Vector2(speedX, speedY), Main.rand.Next(m_grenades), damage, knockBack, Main.myPlayer);
                     return false;
                 }
 

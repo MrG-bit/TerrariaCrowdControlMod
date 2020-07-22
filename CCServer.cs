@@ -110,6 +110,7 @@ namespace CrowdControlMod
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_rainbowPaintTimer = null;
 		public readonly Timer m_shootBombTimer = null;
+		public readonly Timer m_shootGrenadeTimer = null;
 		public readonly Timer m_projItemTimer = null;
 		public readonly Timer m_increasedSpawnsTimer = null;
 		public readonly Timer m_flipCameraTimer = null;
@@ -119,7 +120,8 @@ namespace CrowdControlMod
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
 		public readonly int m_timeRainbowPaint = 45;
-		public readonly int m_timeShootBomb = 30;
+		public readonly int m_timeShootBomb = 20;
+		public readonly int m_timeShootGrenade = 30;
 		public readonly int m_timeProjItem = 45;
 		public readonly int m_timeIncSpawnrate = 40;
 		public readonly int m_timeBuffDaze = 25;
@@ -253,6 +255,13 @@ namespace CrowdControlMod
                 };
                 m_shootBombTimer.Elapsed += delegate { StopEffect("shoot_bomb"); };
 
+				m_shootGrenadeTimer = new Timer
+                {
+                    Interval = 1000 * m_timeShootGrenade,
+                    AutoReset = false
+                };
+				m_shootGrenadeTimer.Elapsed += delegate { StopEffect("shoot_grenade"); };
+
 				m_projItemTimer = new Timer
 				{
 					Interval = 1000 * m_timeProjItem,
@@ -327,6 +336,8 @@ namespace CrowdControlMod
 				StopEffect("tile_paint");
             if (m_shootBombTimer.Enabled)
                 StopEffect("shoot_bomb");
+			if (m_shootGrenadeTimer.Enabled)
+                StopEffect("shoot_grenade");
 			if (m_projItemTimer.Enabled)
 				StopEffect("proj_item");
             if (m_increasedSpawnsTimer.Enabled)
@@ -530,6 +541,11 @@ namespace CrowdControlMod
                     TDebug.WriteMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
 					break;
 
+				case "shoot_grenade":
+					ResetTimer(m_shootGrenadeTimer);
+					TDebug.WriteMessage(168, "Shooting grenades for " + m_timeShootGrenade + " seconds thanks to " + viewer, MSG_C_NEUTRAL);
+					break;
+
 				case "proj_item":
 					ResetTimer(m_projItemTimer);
 					Projectiles.ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
@@ -689,6 +705,11 @@ namespace CrowdControlMod
                     m_shootBombTimer.Stop();
                     TDebug.WriteMessage(MSG_ITEM_TIMEREND, "No longer shooting explosives", MSG_C_TIMEREND);
                     break;
+
+				case "shoot_grenade":
+					m_shootGrenadeTimer.Stop();
+					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "No longer shooting grenades", MSG_C_TIMEREND);
+					break;
 
 				case "proj_item":
 					m_projItemTimer.Stop();

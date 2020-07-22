@@ -77,6 +77,7 @@ namespace CrowdControlMod.Projectiles
         // Called before the projectile is killed
         public override bool PreKill(Projectile projectile, int timeLeft)
         {
+            /*
             // Prevent bombs from destroying tiles
             if (CrowdControlMod._server.m_shootBombTimer.Enabled && (projectile.type == Terraria.ID.ProjectileID.Bomb || projectile.type == Terraria.ID.ProjectileID.StickyBomb ||
                 projectile.type == Terraria.ID.ProjectileID.BouncyBomb || projectile.type == Terraria.ID.ProjectileID.Dynamite || projectile.type == Terraria.ID.ProjectileID.BouncyDynamite))
@@ -90,6 +91,7 @@ namespace CrowdControlMod.Projectiles
                 }
                 return false;
             }
+            */
 
             return base.PreKill(projectile, timeLeft);
         }

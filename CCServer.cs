@@ -127,6 +127,7 @@ namespace CrowdControlMod
         // Timers used for some effects
         public readonly Timer m_fastPlayerTimer = null;
 		public readonly Timer m_jumpPlayerTimer = null;
+		public readonly Timer m_slipPlayerTimer = null;
 		public readonly Timer m_rainbowPaintTimer = null;
 		public readonly Timer m_shootBombTimer = null;
 		public readonly Timer m_shootGrenadeTimer = null;
@@ -138,11 +139,13 @@ namespace CrowdControlMod
 		// Times for the various effects (in seconds)
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
+		public readonly int m_timeSlipPlayer = 25;
 		public readonly int m_timeRainbowPaint = 45;
 		public readonly int m_timeShootBomb = 20;
 		public readonly int m_timeShootGrenade = 30;
 		public readonly int m_timeProjItem = 45;
 		public readonly int m_timeIncSpawnrate = 30;
+		public readonly int m_timeBuffFreeze = 3;
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
@@ -174,6 +177,7 @@ namespace CrowdControlMod
 		public readonly float m_fastPlrCaveAccel = 1f;						// Movement acceleration underground
 		public readonly int m_jumpPlrHeight = 22;							// Player jump height
 		public readonly float m_jumpPlrSpeed = 16f;                         // Player jump speed
+		public readonly float m_slipPlrAccel = 0.4f;						// Player run acceleration when slippery (percentage of current accel)
 		private readonly int m_potionStack = 2;								// Number of potions to provide the player
 		public readonly int[] m_preMelee =									// Prefix IDs used for melee weapons
 		{
@@ -266,6 +270,13 @@ namespace CrowdControlMod
 				};
 				m_jumpPlayerTimer.Elapsed += delegate { StopEffect("jumpplr"); };
 
+				m_slipPlayerTimer = new Timer
+				{
+					Interval = 1000 * m_timeSlipPlayer,
+					AutoReset = false
+				};
+				m_slipPlayerTimer.Elapsed += delegate { StopEffect("slipplr"); };
+
 				m_rainbowPaintTimer = new Timer
 				{
 					Interval = 1000 * m_timeRainbowPaint,
@@ -357,6 +368,8 @@ namespace CrowdControlMod
 				StopEffect("fastplr");
 			if (m_jumpPlayerTimer.Enabled)
 				StopEffect("jumpplr");
+			if (m_slipPlayerTimer.Enabled)
+				StopEffect("slipplr");
 			if (m_rainbowPaintTimer.Enabled)
 				StopEffect("tile_paint");
             if (m_shootBombTimer.Enabled)
@@ -520,6 +533,11 @@ namespace CrowdControlMod
 					TDebug.WriteMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
+				case "slipplr":
+					ResetTimer(m_slipPlayerTimer);
+					TDebug.WriteMessage(950, viewer + " made the ground very slippery", MSG_C_NEGATIVE);
+					break;
+
 				case "randtp":
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.TeleportationPotion);
@@ -615,6 +633,11 @@ namespace CrowdControlMod
 					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
                     TDebug.WriteMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
                     break;
+
+				case "buff_freeze":
+					m_player.player.AddBuff(Terraria.ID.BuffID.Frozen, 60 * m_timeBuffFreeze, true);
+					TDebug.WriteMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
+					break;
 
                 case "buff_daze":
                     m_player.player.AddBuff(Terraria.ID.BuffID.Dazed, 60 * m_timeBuffDaze, true);
@@ -740,6 +763,11 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendDataToServer(EPacketEffect.SET_JUMP, false);
 					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
+					break;
+
+				case "slipplr":
+					m_slipPlayerTimer.Stop();
+					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Ground is no longer slippery", MSG_C_TIMEREND);
 					break;
 
 				case "tile_paint":

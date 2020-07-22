@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-21
+/// Last Updated: 2020-07-22
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -162,6 +162,13 @@ namespace CrowdControlMod
                     player.runAcceleration = aboveSurface ? CrowdControlMod._server.m_fastPlrSurfAccel : CrowdControlMod._server.m_fastPlrCaveAccel;
                 }
 
+                // Make the ground slippery
+                if (CrowdControlMod._server.m_slipPlayerTimer.Enabled && IsGrounded())
+                {
+                    player.runAcceleration *= CrowdControlMod._server.m_slipPlrAccel;
+                    player.runSlowdown = 0f;
+                }
+
                 // Make player jump higher
                 if ((CrowdControlMod._server.m_jumpPlayerTimer.Enabled && Main.myPlayer == player.whoAmI) || m_servJump)
                 {
@@ -280,6 +287,14 @@ namespace CrowdControlMod
                     NetMessage.SendData(MessageID.SyncItem, -1, -1, null, number4, 1f);
                 }
             }
+        }
+
+        // Check if the player is on the ground
+        public bool IsGrounded()
+        {
+            int px = (int)(player.position.X / 16);
+            int py = (int)(player.position.Y / 16);
+            return Main.tileSolid[Main.tile[px, py + 4].type] && player.velocity.Y == 0f;
         }
     }
 }

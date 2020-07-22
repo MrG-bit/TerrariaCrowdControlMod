@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
+using CrowdControlMod.Projectiles;
+using System.Security.Cryptography.X509Certificates;
 
 namespace CrowdControlMod
 {
@@ -36,6 +38,7 @@ namespace CrowdControlMod
 			START_SUNDIAL,
 			SPAWN_DUST,			// int type, int x, int y, int sizeX, int sizeY, int speedX, int speedY, float scale, int count
 			SPAWN_GORE,			// int type, int x, int y, int speedX, int speedY, float scale, int count
+			SPAWN_EXPLODE,		// int type, int x, int y, int timeLeft
 		}
 
 		private enum RequestType
@@ -146,6 +149,7 @@ namespace CrowdControlMod
 		public readonly int m_timeProjItem = 45;
 		public readonly int m_timeIncSpawnrate = 30;
 		public readonly int m_timeBuffFreeze = 3;
+		public readonly int m_timeBuffFire = 15;
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
@@ -211,8 +215,8 @@ namespace CrowdControlMod
 		};
 		private int m_rainbowIndex = 0;										// Index of the paint in the rainbowPaint array to use next
 		private readonly CyclicArray<Tile> m_rainbowTiles;                  // Keep track of the tiles painted so the same tile is painted repeatedly
-		private readonly int m_spawnGuardHalfHeight = 16 * 34;               //
-		private readonly int m_spawnGuardHalfWidth = 16 * 90;                //
+		private readonly int m_spawnGuardHalfHeight = 16 * 34;              // Half height distance from player that the guardian can spawn
+		private readonly int m_spawnGuardHalfWidth = 16 * 90;               // Half width distance from player that the guardian can spawn
 		private readonly List<Tuple<int, int>> m_guardians =				// List of dungeon guardians that are spawned via effects
 			new List<Tuple<int, int>>();
 		private readonly int m_guardianSurvivalTime = 60 * 6;				// How long the player needs to survive the dungeon guardian for to "win"
@@ -504,11 +508,19 @@ namespace CrowdControlMod
                 case "killplr":
 					m_player.m_reduceRespawn = true;
 					m_player.player.KillMe(
-                        Terraria.DataStructures.PlayerDeathReason.ByCustomReason(m_player.player.name + " was " + (m_killVerb[Main.rand.Next(m_killVerb.Length)]) + " by " + viewer + "."),
+                        Terraria.DataStructures.PlayerDeathReason.ByCustomReason(m_player.player.name + " was " + (m_killVerb[Main.rand.Next(m_killVerb.Length)]) + " by " + viewer),
                         1000, 0, false);
                     break;
 
-                case "healplr":
+				case "explodeplr":
+					m_player.m_reduceRespawn = true;
+					m_player.player.KillMe(
+						Terraria.DataStructures.PlayerDeathReason.ByCustomReason(m_player.player.name + " was brutally torn apart by " + viewer + "'s explosive"),
+						1000, 0, false);
+					Projectile.NewProjectile(m_player.player.Center, Vector2.Zero, ModContent.ProjectileType<InstaDynamite>(), 1, 1f, Main.myPlayer);
+					break;
+
+				case "healplr":
 					m_player.player.statLife = m_player.player.statLifeMax2;
                     TDebug.WriteMessage(29, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
                     break;
@@ -649,7 +661,13 @@ namespace CrowdControlMod
 					TDebug.WriteMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 
-                case "buff_daze":
+				case "buff_fire":
+					m_player.player.AddBuff(Terraria.ID.BuffID.OnFire, 60 * m_timeBuffFire, true);
+					Projectile.NewProjectile(m_player.player.position, new Vector2(0f, 10f), Terraria.ID.ProjectileID.MolotovCocktail, 1, 1f, Main.myPlayer);
+					TDebug.WriteMessage(2590, viewer + " threw a molotov at " + m_player.player.name + "'s feet", MSG_C_NEGATIVE);
+					break;
+
+				case "buff_daze":
                     m_player.player.AddBuff(Terraria.ID.BuffID.Dazed, 60 * m_timeBuffDaze, true);
                     TDebug.WriteMessage(75, viewer + " dazed " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
@@ -1917,6 +1935,14 @@ namespace CrowdControlMod
 					Main.fastForwardTime = true;
 					NetMessage.SendData(Terraria.ID.MessageID.WorldData, -1, -1, null);
 					break;
+				case EPacketEffect.SPAWN_EXPLODE:
+					type = reader.ReadInt32();
+					x = reader.ReadInt32();
+					y = reader.ReadInt32();
+					int timeLeft = reader.ReadInt32();
+					SendDataToClients(EPacketEffect.SPAWN_EXPLODE, type, x, y, timeLeft);
+					debugText += type + ", " + x + ", " + y + ", " + timeLeft;
+					break;
 			}
 
 			TDebug.WriteDebug(debugText + ") from " + Main.player[sender].name, Color.Yellow);
@@ -1954,6 +1980,14 @@ namespace CrowdControlMod
 					count = reader.ReadInt32();
 					for (int b = 0; b < count; b++)
 						Gore.NewGore(new Vector2(x, y), new Vector2(speedX, speedY), type, scale);
+					break;
+				case EPacketEffect.SPAWN_EXPLODE:
+					type = reader.ReadInt32();
+					x = reader.ReadInt32();
+					y = reader.ReadInt32();
+					int timeLeft = reader.ReadInt32();
+					int dynID = Projectile.NewProjectile(new Vector2(x, y), Vector2.Zero, type, 1, 1f, sender);
+					Main.projectile[dynID].timeLeft = timeLeft;
 					break;
 			}
 

@@ -49,8 +49,8 @@ namespace CrowdControlMod
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
-        public Vector2 m_deathPoint = Vector2.Zero;                 // Player previous death point
-        private readonly int m_deathMinDistT = 110;                 // Minimum distance from spawn that deaths will count towards the deathPoint (in tiles)
+        private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
+        private readonly int m_deathMinDistT = 180;                 // Minimum distance from spawn that deaths will count towards the deathPoint (in tiles)
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)

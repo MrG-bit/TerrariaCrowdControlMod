@@ -61,7 +61,7 @@ namespace CrowdControlMod
 		{
 			// Stop the server when the user exits the world
 			_server.Stop();
-			
+
 			base.PreSaveAndQuit();
 		}
 
@@ -69,14 +69,23 @@ namespace CrowdControlMod
 		public override void HandlePacket(BinaryReader reader, int whoAmI)
 		{
 			// Pass forward packet to CC server
-			if (_server != null && Main.dedServ)
-				_server.HandleData((CCServer.EPacketEffect)reader.ReadByte(), reader.ReadInt32(), reader);
+			if (_server != null)
+				_server.RouteIncomingPacket(reader);
 
 			base.HandlePacket(reader, whoAmI);
 		}
 
-		// Called after game is rendered
-		private void OnPostDraw(GameTime gameTime)
+		// Called in the update during time update
+        public override void MidUpdateTimeWorld()
+        {
+			if (_server != null && Main.netMode != Terraria.ID.NetmodeID.MultiplayerClient)
+				_server.CheckDungeonGuardians();
+
+			base.MidUpdateTimeWorld();
+        }
+
+        // Called after game is rendered
+        private void OnPostDraw(GameTime gameTime)
 		{
 			// Draw wall of fish across the screen
 			if (_server != null && _server.IsRunning && _server.m_fishWallTimer.Enabled)

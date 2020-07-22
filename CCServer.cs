@@ -15,6 +15,8 @@ using Newtonsoft.Json;
 using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
+using System.Drawing.Drawing2D;
+using IL.Terraria.Net;
 
 namespace CrowdControlMod
 {
@@ -22,6 +24,7 @@ namespace CrowdControlMod
 	{
         #region Network Types
 
+		// bool isServer, int sender
         public enum EPacketEffect : byte
 		{
 			CC_CONNECT,         // Broadcasts a message to the server when a client connects to Crowd Control
@@ -33,6 +36,8 @@ namespace CrowdControlMod
 			SET_SPEED,			// bool enabled
 			SET_JUMP,			// bool enabled
 			START_SUNDIAL,
+			SPAWN_DUST,			// int type, int x, int y, int sizeX, int sizeY, int speedX, int speedY, float scale, int count
+			SPAWN_GORE,			// int type, int x, int y, int speedX, int speedY, float scale, int count
 		}
 
 		private enum RequestType
@@ -184,9 +189,12 @@ namespace CrowdControlMod
 			13,14,15,16,17,18,19,20,21,22,23,24
 		};
 		private int m_rainbowIndex = 0;										// Index of the paint in the rainbowPaint array to use next
-		private readonly CyclicArray<Tile> m_rainbowTiles;					// Keep track of the tiles painted so the same tile is painted repeatedly
-		public readonly int m_spawnGuardHalfHeight = 16 * 34;				//
-		public readonly int m_spawnGuardHalfWidth = 16 * 90;				//
+		private readonly CyclicArray<Tile> m_rainbowTiles;                  // Keep track of the tiles painted so the same tile is painted repeatedly
+		private readonly int m_spawnGuardHalfHeight = 16 * 34;               //
+		private readonly int m_spawnGuardHalfWidth = 16 * 90;                //
+		private readonly List<Tuple<int, int>> m_guardians =				// List of dungeon guardians that are spawned via effects
+			new List<Tuple<int, int>>();
+		private readonly int m_guardianSurvivalTime = 60 * 6;				// How long the player needs to survive the dungeon guardian for to "win"
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
 
@@ -369,7 +377,7 @@ namespace CrowdControlMod
                 {
 					TDebug.WriteMessage(1525, "Connected to Crowd Control", Color.Green);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.CC_CONNECT);
+						SendDataToServer(EPacketEffect.CC_CONNECT);
                     while (m_activeSocket.Connected && m_activeSocket.Poll(1000, SelectMode.SelectWrite) && ClientLoop(m_activeSocket)) ;
                     try { m_activeSocket.Shutdown(SocketShutdown.Both); }
                     finally { m_activeSocket.Close(); }
@@ -484,14 +492,14 @@ namespace CrowdControlMod
 				case "fastplr":
 					ResetTimer(m_fastPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_SPEED, true);
+						SendDataToServer(EPacketEffect.SET_SPEED, true);
 					TDebug.WriteMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "jumpplr":
 					ResetTimer(m_jumpPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_JUMP, true);
+						SendDataToServer(EPacketEffect.SET_JUMP, true);
 					TDebug.WriteMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -560,15 +568,15 @@ namespace CrowdControlMod
 							return EffectResult.RETRY;
 					}
 					else
-						SendData(EPacketEffect.GEN_STRUCT, viewer);
+						SendDataToServer(EPacketEffect.GEN_STRUCT, viewer);
                     break;
 
                 case "sp_guard":
 					m_player.m_reduceRespawn = true;
 					Vector2 circlePos = Main.rand.NextVector2CircularEdge(m_spawnGuardHalfWidth, m_spawnGuardHalfHeight);
 					Point spawnPos = new Point((int)m_player.player.position.X + (int)circlePos.X, (int)m_player.player.position.Y + (int)circlePos.Y);
-					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian);
-					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_guardians.Add(new Tuple<int, int>(NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian), m_guardianSurvivalTime));
+					else SendDataToServer(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
                     TDebug.WriteMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
 
@@ -579,7 +587,7 @@ namespace CrowdControlMod
                 case "inc_spawnrate":
 					ResetTimer(m_increasedSpawnsTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = m_increaseSpawnRate;
-					else SendData(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
+					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
                     TDebug.WriteMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
                     break;
 
@@ -630,7 +638,7 @@ namespace CrowdControlMod
 					}
 
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) Main.fastForwardTime = true;
-					else SendData(EPacketEffect.START_SUNDIAL);
+					else SendDataToServer(EPacketEffect.START_SUNDIAL);
 					TDebug.WriteMessage(3064, viewer + " advanced time to sunrise", MSG_C_NEUTRAL);
                     break;
 
@@ -685,14 +693,14 @@ namespace CrowdControlMod
 				case "fastplr":
 					m_fastPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_SPEED, false);
+						SendDataToServer(EPacketEffect.SET_SPEED, false);
 					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "jumpplr":
 					m_jumpPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_JUMP, false);
+						SendDataToServer(EPacketEffect.SET_JUMP, false);
 					TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
 					break;
 
@@ -719,7 +727,7 @@ namespace CrowdControlMod
 				case "inc_spawnrate":
                     m_increasedSpawnsTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = 1f;
-					else SendData(EPacketEffect.SET_SPAWNRATE, 1f);
+					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, 1f);
                     TDebug.WriteMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
 					break;
 
@@ -861,6 +869,7 @@ namespace CrowdControlMod
 			do { id = m_pets[Main.rand.Next(m_pets.Length)]; } while (m_prevPets.Contains(id));
 			m_prevPets.Add(id);
 			m_player.player.AddBuff(id, 1);
+			m_player.m_petID = id;
 			TDebug.WriteMessage(1927, viewer + " provided " + m_player.player.name + " with a " + Lang.GetBuffName(id), MSG_C_POSITIVE);
 		}
 
@@ -953,21 +962,21 @@ namespace CrowdControlMod
             {
 				type = WorldGen.crimson ? Terraria.ID.NPCID.CrimsonBunny : Terraria.ID.NPCID.CorruptBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
 				TDebug.WriteMessage(1338, viewer + " spawned an Evil Bunny", MSG_C_NEGATIVE);
             }
             else if (Main.rand.Next(0, 100) < 5)
             {
 				type = Terraria.ID.NPCID.GoldBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
                 TDebug.WriteMessage(2890, viewer + " spawned a Gold Bunny", MSG_C_POSITIVE);
             }
             else
             {
                 type = Main.rand.Next(new short[] { Terraria.ID.NPCID.Bunny, Terraria.ID.NPCID.BunnySlimed, Terraria.ID.NPCID.BunnyXmas, Terraria.ID.NPCID.PartyBunny });
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
                 TDebug.WriteMessage(2019, viewer + " spawned a Bunny", MSG_C_NEUTRAL);
             }
         }
@@ -1599,7 +1608,7 @@ namespace CrowdControlMod
 			}
 			else
 			{
-				SendData(EPacketEffect.SET_TIME, time, dayTime);
+				SendDataToServer(EPacketEffect.SET_TIME, time, dayTime);
 			}
 		}
 
@@ -1617,7 +1626,7 @@ namespace CrowdControlMod
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					WorldGen.paintTile(x, y, colour, false);
 				else
-					SendData(EPacketEffect.SET_PAINTTILE, x, y, colour);
+					SendDataToServer(EPacketEffect.SET_PAINTTILE, x, y, colour);
 			}
 
 			// Rainbowify if not already rainbowified
@@ -1626,15 +1635,51 @@ namespace CrowdControlMod
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					WorldGen.paintTile(x, y, m_rainbowPaint[m_rainbowIndex], false);
 				else
-					SendData(EPacketEffect.SET_PAINTTILE, x, y, m_rainbowPaint[m_rainbowIndex]);
+					SendDataToServer(EPacketEffect.SET_PAINTTILE, x, y, m_rainbowPaint[m_rainbowIndex]);
 
 				m_rainbowTiles.Add(Main.tile[x, y]);
 				m_rainbowIndex = (m_rainbowIndex + 1) % m_rainbowPaint.Length;
 			}
 		}
 
+		// Check if dungeon guardians should be despawned (call once per tick)
+		public void CheckDungeonGuardians()
+        {
+			for (int i = 0; i < m_guardians.Count; ++i)
+            {
+				int guardianID = m_guardians[i].Item1;
+				int timeLeft = m_guardians[i].Item2;
+
+				// Check if valid npc
+				if (Main.npc[guardianID] == null || !Main.npc[guardianID].active || Main.npc[guardianID].type != Terraria.ID.NPCID.DungeonGuardian)
+                {
+					m_guardians.RemoveAt(i);
+					--i;
+					TDebug.WriteDebug("Removed guardian due to being an invalid NPC", Color.Yellow);
+					continue;
+                }
+
+				--timeLeft;
+
+				// Check if time expired
+				if (timeLeft <= 0)
+				{
+					Main.npc[guardianID].ai[1] = 3f;
+					if (Main.netMode == Terraria.ID.NetmodeID.Server)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, guardianID);
+
+					m_guardians.RemoveAt(i);
+					--i;
+					TDebug.WriteDebug("Removed guardian due to time expiring", Color.Yellow);
+					continue;
+				}
+
+				m_guardians[i] = new Tuple<int, int>(guardianID, timeLeft);
+            }
+        }
+
 		// Send a modded effect packet to the server (as client)
-		public void SendData(EPacketEffect packetEffect, params object[] data)
+		public void SendDataToServer(EPacketEffect packetEffect, params object[] data)
 		{
 			if (Main.dedServ)
 				return;
@@ -1642,6 +1687,7 @@ namespace CrowdControlMod
 			try
 			{
 				ModPacket packet = CrowdControlMod._mod.GetPacket(data.Length);
+				packet.Write(true);
 				packet.Write((byte)packetEffect);
 				packet.Write(Main.myPlayer);
 				if (data != null)
@@ -1656,8 +1702,42 @@ namespace CrowdControlMod
 			catch (Exception e) { TDebug.WriteDebug("Failed to send modded packet: " + e.Message, Color.Yellow); }
 		}
 
+		// Send a modded effect packet to all clients (as server)
+		public void SendDataToClients(EPacketEffect packetEffect, params object[] data)
+        {
+			if (!Main.dedServ)
+				return;
+
+			try
+			{
+				ModPacket packet = CrowdControlMod._mod.GetPacket(data.Length);
+				packet.Write(false);
+				packet.Write((byte)packetEffect);
+				packet.Write(Main.myPlayer);
+				if (data != null)
+				{
+					for (int i = 0; i < data.Length; ++i)
+						WriteToPacket(packet, data[i]);
+				}
+				packet.Send(-1, -1);
+				TDebug.WriteDebug("Server sent packet type: " + packetEffect, Color.Yellow);
+
+			}
+			catch (Exception e) { TDebug.WriteDebug("Failed to send modded packet: " + e.Message, Color.Yellow); }
+		}
+
+		// Route an incoming packet to the correct handler
+		public void RouteIncomingPacket(BinaryReader reader)
+        {
+			bool isForServer = reader.ReadBoolean();
+			EPacketEffect effect = (EPacketEffect)reader.ReadByte();
+			int sender = reader.ReadInt32();
+			if (isForServer) HandleDataAsServer(effect, sender, reader);
+			else HandleDataAsClient(effect, sender, reader);
+        }
+
 		// Handle a modded effect packet (as server)
-		public void HandleData(EPacketEffect packetEffect, int sender, BinaryReader reader)
+		private void HandleDataAsServer(EPacketEffect packetEffect, int sender, BinaryReader reader)
 		{
 			string debugText = "Server received packet type: " + packetEffect + " (";
 			int x, y;
@@ -1672,6 +1752,7 @@ namespace CrowdControlMod
 					 x = reader.ReadInt32();
 					 y = reader.ReadInt32();
 					int id = NPC.NewNPC(x, y, type);
+					if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, m_guardianSurvivalTime));
 					NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, id);
 					debugText += type + ", " + x + ", " + y;
 					break;
@@ -1714,6 +1795,44 @@ namespace CrowdControlMod
 				case EPacketEffect.START_SUNDIAL:
 					Main.fastForwardTime = true;
 					NetMessage.SendData(Terraria.ID.MessageID.WorldData, -1, -1, null);
+					break;
+			}
+
+			TDebug.WriteDebug(debugText + ") from " + Main.player[sender].name, Color.Yellow);
+		}
+
+		// Handle a modded effect packet (as client)
+		private void HandleDataAsClient(EPacketEffect packetEffect, int sender, BinaryReader reader)
+        {
+			string debugText = "Client received packet type: " + packetEffect + " (";
+			int type, x, y, sizeX, sizeY, speedX, speedY, count;
+			float scale;
+			switch (packetEffect)
+			{
+				case EPacketEffect.SPAWN_DUST:
+					type = reader.ReadInt32();
+					x = reader.ReadInt32();
+					y = reader.ReadInt32();
+					sizeX = reader.ReadInt32();
+					sizeY = reader.ReadInt32();
+					speedX = reader.ReadInt32();
+					speedY = reader.ReadInt32();
+					scale = reader.ReadSingle();
+					count = reader.ReadInt32();
+					for (int b = 0; b < count; b++)
+						Dust.NewDust(new Vector2(x, y), sizeX, sizeY, type, speedX, speedY, 0, Color.White, scale);
+					debugText += type + ", " + x + ", " + y + ", " + speedX + ", " + speedY;
+					break;
+				case EPacketEffect.SPAWN_GORE:
+					type = reader.ReadInt32();
+					x = reader.ReadInt32();
+					y = reader.ReadInt32();
+					speedX = reader.ReadInt32();
+					speedY = reader.ReadInt32();
+					scale = reader.ReadSingle();
+					count = reader.ReadInt32();
+					for (int b = 0; b < count; b++)
+						Gore.NewGore(new Vector2(x, y), new Vector2(speedX, speedY), type, scale);
 					break;
 			}
 

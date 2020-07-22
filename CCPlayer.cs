@@ -11,6 +11,7 @@ using Terraria.ModLoader;
 using Terraria.ID;
 using System.Collections.Generic;
 using Terraria.DataStructures;
+using Terraria.ModLoader.UI.ModBrowser;
 
 namespace CrowdControlMod
 {
@@ -46,6 +47,7 @@ namespace CrowdControlMod
         public bool m_servJump = false;                             // Whether player jump boost is increased (server-side)
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
+        public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -93,35 +95,38 @@ namespace CrowdControlMod
 
             if (Main.myPlayer == player.whoAmI)
             {
-                // Rainbow-ify the tiles below the player
-                if (CrowdControlMod._server != null && CrowdControlMod._server.m_rainbowPaintTimer.Enabled && player.velocity.Y == 0f)
+                if (CrowdControlMod._server != null)
                 {
-                    int x = (int)(player.position.X / 16);
-                    int y = (int)(player.position.Y / 16);
-
-                    CrowdControlMod._server.RainbowifyTileClient(x, y + 3);
-                    CrowdControlMod._server.RainbowifyTileClient(x + 1, y + 3);
-                }
-
-                // Spawn bombs periodically
-                if (CrowdControlMod._server != null && CrowdControlMod._server.m_shootBombTimer.Enabled)
-                {
-                    m_explosiveDelay -= 1;
-                    if (m_explosiveDelay <= 0)
+                    // Rainbow-ify the tiles below the player
+                    if (CrowdControlMod._server.m_rainbowPaintTimer.Enabled && player.velocity.Y == 0f)
                     {
-                        m_explosiveDelay = Main.rand.Next(m_minExplosiveDelay, m_maxExplosiveDelay);
-                        Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_explosives), 10, 1f, Main.myPlayer);
+                        int x = (int)(player.position.X / 16);
+                        int y = (int)(player.position.Y / 16);
+
+                        CrowdControlMod._server.RainbowifyTileClient(x, y + 3);
+                        CrowdControlMod._server.RainbowifyTileClient(x + 1, y + 3);
                     }
-                }
 
-                // Spawn grenades periodically
-                if (CrowdControlMod._server != null && CrowdControlMod._server.m_shootGrenadeTimer.Enabled)
-                {
-                    m_grenadeDelay -= 1;
-                    if (m_grenadeDelay <= 0)
+                    // Spawn bombs periodically
+                    if (CrowdControlMod._server.m_shootBombTimer.Enabled)
                     {
-                        m_grenadeDelay = Main.rand.Next(m_minGrenadeDelay, m_maxGrenadeDelay);
-                        Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_grenades), 10, 1f, Main.myPlayer);
+                        m_explosiveDelay -= 1;
+                        if (m_explosiveDelay <= 0)
+                        {
+                            m_explosiveDelay = Main.rand.Next(m_minExplosiveDelay, m_maxExplosiveDelay);
+                            Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_explosives), 10, 1f, Main.myPlayer);
+                        }
+                    }
+
+                    // Spawn grenades periodically
+                    if (CrowdControlMod._server.m_shootGrenadeTimer.Enabled)
+                    {
+                        m_grenadeDelay -= 1;
+                        if (m_grenadeDelay <= 0)
+                        {
+                            m_grenadeDelay = Main.rand.Next(m_minGrenadeDelay, m_maxGrenadeDelay);
+                            Projectile.NewProjectile(player.Center, Main.rand.NextVector2Unit() * Main.rand.NextFloat(m_minExplosiveSpd, m_maxExplosiveSpd), Main.rand.Next(m_grenades), 10, 1f, Main.myPlayer);
+                        }
                     }
                 }
 
@@ -169,6 +174,15 @@ namespace CrowdControlMod
         // Called when the player respawns
         public override void OnRespawn(Player player)
         {
+            // Respawn pet
+            if (m_petID >= 0)
+            {
+                if (!player.hideMisc[0])
+                    m_petID = -1;
+                else
+                    player.AddBuff(m_petID, 1);
+            }
+
             base.OnRespawn(player);
         }
 
@@ -210,7 +224,6 @@ namespace CrowdControlMod
             {
                 player.respawnTimer = m_reducedCooldown;
                 m_reduceRespawn = false;
-                TDebug.WriteDebug("Reduced respawn timer to " + player.respawnTimer, Color.Yellow);
             }
 
             base.Kill(damage, hitDirection, pvp, damageSource);

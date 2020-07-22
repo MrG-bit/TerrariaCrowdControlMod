@@ -123,7 +123,7 @@ namespace CrowdControlMod
 		public readonly int m_timeShootBomb = 20;
 		public readonly int m_timeShootGrenade = 30;
 		public readonly int m_timeProjItem = 45;
-		public readonly int m_timeIncSpawnrate = 40;
+		public readonly int m_timeIncSpawnrate = 30;
 		public readonly int m_timeBuffDaze = 25;
 		public readonly int m_timeBuffLev = 25;
 		public readonly int m_timeBuffConf = 25;
@@ -517,7 +517,7 @@ namespace CrowdControlMod
 					break;
 
 				case "item_money":
-					int coins = Item.buyPrice(0, 0, Main.rand.Next(20, 80), 0);
+					int coins = Item.buyPrice(0, 0, Main.rand.Next(25, 100), 0);
 					m_player.GiveCoins(coins);
 					TDebug.WriteMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
 					break;
@@ -612,7 +612,7 @@ namespace CrowdControlMod
 
                 case "buff_life":
                     m_player.player.AddBuff(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife, true);
-                    TDebug.WriteMessage(1291, viewer + " boosted the maximum health of " + m_player.player.name, MSG_C_POSITIVE);
+                    TDebug.WriteMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
 				case "buff_move":

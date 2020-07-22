@@ -15,8 +15,6 @@ using Newtonsoft.Json;
 using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
-using System.Drawing.Drawing2D;
-using IL.Terraria.Net;
 
 namespace CrowdControlMod
 {
@@ -108,6 +106,22 @@ namespace CrowdControlMod
 
         #endregion
 
+        #region Other Types
+
+		public enum EProgression
+        {
+			PRE_EYE,
+			PRE_SKELETRON,
+			PRE_WOF,
+			PRE_MECH,
+			PRE_GOLEM,
+			PRE_LUNAR,
+			PRE_MOON_LORD,
+			END_GAME
+        }
+
+        #endregion
+
         #region Timers
 
         // Timers used for some effects
@@ -157,7 +171,8 @@ namespace CrowdControlMod
 		public readonly float m_fastPlrMaxCaveSpeed = 9f;					// Max movement speed underground
 		public readonly float m_fastPlrCaveAccel = 1f;						// Movement acceleration underground
 		public readonly int m_jumpPlrHeight = 22;							// Player jump height
-		public readonly float m_jumpPlrSpeed = 16f;							// Player jump speed
+		public readonly float m_jumpPlrSpeed = 16f;                         // Player jump speed
+		private readonly int m_potionStack = 2;								// Number of potions to provide the player
 		public readonly int[] m_preMelee =									// Prefix IDs used for melee weapons
 		{
 			1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,81
@@ -528,6 +543,14 @@ namespace CrowdControlMod
 					int coins = Item.buyPrice(0, 0, Main.rand.Next(25, 100), 0);
 					m_player.GiveCoins(coins);
 					TDebug.WriteMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
+					break;
+
+				case "item_heal":
+					int itemID = ChoosePerProgression(28, 188, 188, 499, 499, 499, 3544, 3544);
+					int id = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, itemID, m_potionStack);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1f);
+					TDebug.WriteMessage(itemID, viewer + " gave " + m_player.player.name + " " + m_potionStack + " " + Main.item[id].Name + "s", MSG_C_POSITIVE);
 					break;
 
 				case "item_pet":
@@ -1675,6 +1698,51 @@ namespace CrowdControlMod
 				}
 
 				m_guardians[i] = new Tuple<int, int>(guardianID, timeLeft);
+            }
+        }
+
+		// Check progression of the world
+		public EProgression CheckProgression()
+        {
+			if (NPC.downedMoonlord)
+				return EProgression.END_GAME;
+			else if (NPC.downedAncientCultist)
+				return EProgression.PRE_MOON_LORD;
+			else if (NPC.downedGolemBoss)
+				return EProgression.PRE_LUNAR;
+			else if (NPC.downedMechBossAny)
+				return EProgression.PRE_GOLEM;
+			else if (Main.hardMode)
+				return EProgression.PRE_MECH;
+			else if (NPC.downedBoss3)
+				return EProgression.PRE_WOF;
+			else if (NPC.downedBoss1)
+				return EProgression.PRE_SKELETRON;
+			else
+				return EProgression.PRE_EYE;
+        }
+
+		// Choose an options based on the progression of the world
+		public T ChoosePerProgression<T>(T preEye, T preSkeletron, T preWOF, T preMech, T preGolem, T preLunar, T preMoonLord, T postGame)
+        {
+			switch (CheckProgression())
+            {
+				case EProgression.PRE_EYE:
+					return preEye;
+				case EProgression.PRE_SKELETRON:
+					return preSkeletron;
+				case EProgression.PRE_WOF:
+					return preWOF;
+				case EProgression.PRE_MECH:
+					return preMech;
+				case EProgression.PRE_GOLEM:
+					return preGolem;
+				case EProgression.PRE_LUNAR:
+					return preLunar;
+				case EProgression.PRE_MOON_LORD:
+					return preMoonLord;
+				default:
+					return postGame;
             }
         }
 

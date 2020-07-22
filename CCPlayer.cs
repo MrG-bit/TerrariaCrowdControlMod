@@ -12,6 +12,7 @@ using Terraria.ID;
 using System.Collections.Generic;
 using Terraria.DataStructures;
 using Terraria.ModLoader.UI.ModBrowser;
+using Steamworks;
 
 namespace CrowdControlMod
 {
@@ -48,6 +49,8 @@ namespace CrowdControlMod
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
+        public Vector2 m_deathPoint = Vector2.Zero;                 // Player previous death point
+        private readonly int m_deathMinDistT = 110;                 // Minimum distance from spawn that deaths will count towards the deathPoint (in tiles)
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -60,6 +63,8 @@ namespace CrowdControlMod
                 CrowdControlMod._server.SetPlayer(this);
                 CrowdControlMod._server.Start();
             }
+
+            m_deathPoint = Vector2.Zero;
         }
 
         // Called when the player disconnects from a server
@@ -233,7 +238,28 @@ namespace CrowdControlMod
                 m_reduceRespawn = false;
             }
 
+            UpdateDeathPoint();
+
             base.Kill(damage, hitDirection, pvp, damageSource);
+        }
+
+        // Set the death point if far from spawn
+        private void UpdateDeathPoint()
+        {
+            if (Vector2.Distance(new Vector2((int)(player.position.X / 16), (int)(player.position.Y / 16)), new Vector2(player.SpawnX, player.SpawnY)) > m_deathMinDistT)
+            {
+                m_deathPoint = player.position;
+                TDebug.WriteDebug("Saved death position: " + m_deathPoint, Color.Yellow);
+            }
+        }
+
+        // Teleport the player to the previous death point
+        public bool TeleportToDeathPoint()
+        {
+            if (m_deathPoint == Vector2.Zero)
+                return false;
+            player.Teleport(m_deathPoint, 1);
+            return true;
         }
 
         // Give the player coins (extracted from the Terraria source code)

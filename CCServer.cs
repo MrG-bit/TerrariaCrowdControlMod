@@ -549,7 +549,17 @@ namespace CrowdControlMod
 					TDebug.WriteMessage(2351, viewer + " randomly teleported " + m_player.player.name, MSG_C_NEUTRAL);
                     break;
 
-                case "item_drop":
+				case "deathtp":
+					if (m_player.TeleportToDeathPoint())
+						TDebug.WriteMessage(1326, viewer + " sent " + m_player.player.name + " back to their last death position", MSG_C_NEUTRAL);
+					else
+					{
+						m_player.player.Spawn();
+						TDebug.WriteMessage(1326, viewer + " sent " + m_player.player.name + " to spawn because there is no valid death position", MSG_C_NEUTRAL);
+					}
+					break;
+
+				case "item_drop":
                     if (Effect_DropItem(viewer) == EffectResult.RETRY)
                         return EffectResult.RETRY;
                     break;

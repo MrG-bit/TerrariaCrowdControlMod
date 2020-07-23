@@ -31,12 +31,12 @@ namespace CrowdControlMod.Walls
 
                 spriteBatch.Draw(
                     texture: texture,
-                    position: (new Vector2(i * 16 - (int)Main.screenPosition.X, j * 16 - (int)Main.screenPosition.Y) + zero) - new Vector2(32f, 32f),
+                    position: (new Vector2(i * 16 - (int)Main.screenPosition.X, j * 16 - (int)Main.screenPosition.Y) + zero) - new Vector2(16f, 16f),
                     sourceRectangle: new Rectangle(Main.tile[i, j].wallFrameX() + Main.wallFrame[type], Main.tile[i, j].wallFrameX(), 16, 16),
                     color: Main.hslToRgb(((Main.GlobalTime * -0.75f) + (j * 0.05f)) % 1f, 1f, 0.5f),
                     rotation: 0f,
                     origin: Vector2.Zero,
-                    scale: 4f,
+                    scale: 2f,
                     effects: SpriteEffects.None,
                     layerDepth: 0f);
 

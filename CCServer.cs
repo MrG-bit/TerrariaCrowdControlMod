@@ -1887,7 +1887,7 @@ namespace CrowdControlMod
 		public void RainbowifyTileClient(int x, int y, bool randomColour = false)
 		{
 			// Check if tile is active and in the bounds of the array
-			if (x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY && !Main.tile[x, y].active())
+			if (x >= 0 && x < Main.maxTilesX && y >= 0 && y < Main.maxTilesY && Main.tile[x, y] != null && !Main.tile[x, y].active())
 				return;
 
 			// Forcefully set colour of tile

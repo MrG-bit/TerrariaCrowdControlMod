@@ -16,6 +16,7 @@ using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
+using System.Security.Policy;
 
 namespace CrowdControlMod
 {
@@ -38,6 +39,8 @@ namespace CrowdControlMod
 			SPAWN_DUST,			// int type, int x, int y, int sizeX, int sizeY, int speedX, int speedY, float scale, int count
 			SPAWN_GORE,			// int type, int x, int y, int speedX, int speedY, float scale, int count
 			SPAWN_EXPLODE,		// int type, int x, int y, int timeLeft
+			DISABLE_PROJ,		// int id
+			SEND_CONFIG,		// bool disableTombstones
 		}
 
 		private enum RequestType
@@ -182,7 +185,7 @@ namespace CrowdControlMod
         public readonly string[] m_killVerb =								// Collection of kill verbs used in the killplr command (one is chosen randomly each time)
         {
 			"murdered", "executed", "demolished", "destroyed", "spat on",
-			"slam dunked", "killed", "slapped", "didn't regret killing"
+			"slam dunked", "killed", "slapped"
 		};
 		public readonly float m_damagePlayerPerc = 0.15f;					// Set player health to this percentage of the max life
 		public readonly float m_damagePlayerPercPM = 0.02f;					// +- percentage (range) added to damagePlayerPerc
@@ -253,7 +256,9 @@ namespace CrowdControlMod
         private Socket m_activeSocket = null;								// Reference to the socket being used to communicate with Crowd Control
         private CCPlayer m_player = null;                                   // Reference to the ModPlayer instance affected by Crowd Control effects
 		public static bool _showEffectMessages = true;                      // Whether to show effect messages in chat
-		public static bool _shouldConnectToCC = true;						// Whether to connect to crowd control
+		public static bool _shouldConnectToCC = true;                       // Whether to connect to crowd control
+		public static bool _disableTombstones = false;                      // Disable tombstones
+		public static float _respawnTimeFactor = 1f;						// Respawn time factor
 
         #endregion
 
@@ -2147,6 +2152,17 @@ namespace CrowdControlMod
 					SendDataToClients(EPacketEffect.SPAWN_EXPLODE, type, x, y, timeLeft);
 					debugText += type + ", " + x + ", " + y + ", " + timeLeft;
 					break;
+				case EPacketEffect.DISABLE_PROJ:
+					id = reader.ReadInt32();
+					Main.projectile[id].active = false;
+					NetMessage.SendData(Terraria.ID.MessageID.SyncProjectile, -1, -1, null, id);
+					debugText += id;
+					break;
+				case EPacketEffect.SEND_CONFIG:
+					bool disableTombstones = reader.ReadBoolean();
+					Main.player[sender].GetModPlayer<CCPlayer>().m_servDisableTombstones = disableTombstones;
+					debugText += disableTombstones;
+					break;
 			}
 
 			TDebug.WriteDebug(debugText + ") from " + Main.player[sender].name, Color.Yellow);
@@ -2212,10 +2228,18 @@ namespace CrowdControlMod
 			else packet.Write(0);
 		}
 
+		// Send config to server
+		public void SendConfigToServer()
+        {
+			if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+				SendDataToServer(EPacketEffect.SEND_CONFIG, _disableTombstones);
+        }
+
 		// Set the ModPlayer instance affected by Crowd Control Effects (note that the mod should be used in Singleplayer)
 		public void SetPlayer(CCPlayer player)
         {
             m_player = player;
+			SendConfigToServer();
             TDebug.WriteDebug("Setting player to " + m_player.player.name, Color.Yellow);
         }
 

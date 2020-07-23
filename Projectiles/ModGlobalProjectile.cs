@@ -7,6 +7,7 @@
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Linq;
 using Terraria;
 using Terraria.ModLoader;
 
@@ -14,7 +15,47 @@ namespace CrowdControlMod.Projectiles
 {
     public class ModGlobalProjectile : GlobalProjectile
     {
-        public static int m_textureOffset = 0;      // Texture offset
+        public static int m_textureOffset = 0;                      // Texture offset
+        public static int[] m_graves = new int[] {                  // Gravestones
+            Terraria.ID.ProjectileID.Tombstone,
+            Terraria.ID.ProjectileID.GraveMarker,
+            Terraria.ID.ProjectileID.CrossGraveMarker,
+            Terraria.ID.ProjectileID.Headstone,
+            Terraria.ID.ProjectileID.Gravestone,
+            Terraria.ID.ProjectileID.Obelisk,
+            Terraria.ID.ProjectileID.RichGravestone1,
+            Terraria.ID.ProjectileID.RichGravestone2,
+            Terraria.ID.ProjectileID.RichGravestone3,
+            Terraria.ID.ProjectileID.RichGravestone4,
+            Terraria.ID.ProjectileID.RichGravestone5,
+        };
+
+        // Called before AI is run
+        public override bool PreAI(Projectile projectile)
+        {
+            // Disable tombstones
+            if (CrowdControlMod._server != null && ((Main.netMode != Terraria.ID.NetmodeID.Server && CCServer._disableTombstones) || Main.netMode == Terraria.ID.NetmodeID.Server) && m_graves.Contains(projectile.type))
+            {
+                if (Main.netMode == Terraria.ID.NetmodeID.Server)
+                {
+                    CCPlayer player = Main.player[projectile.whoAmI].GetModPlayer<CCPlayer>();
+                    if (player.m_servDisableTombstones)
+                    {
+                        projectile.active = false;
+                        TDebug.WriteDebug("Server disabled " + player.player.name + "'s tombstone", Color.Yellow);
+                        return false;
+                    }
+                }
+                else
+                {
+                    projectile.active = false;
+                    TDebug.WriteDebug("Client disabled tombstone", Color.Yellow);
+                    return false;
+                }
+            }
+
+            return base.PreAI(projectile);
+        }
 
         // Called before the projectile is drawn (false means no draw)
         public override bool PreDraw(Projectile projectile, SpriteBatch spriteBatch, Color lightColor)

@@ -49,8 +49,8 @@ namespace CrowdControlMod
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
         private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
-        private readonly int m_deathMinDistT = 180;                 // Minimum distance from spawn that deaths will count towards the deathPoint (in tiles)
         public float m_oldZoom = -1f;                               // Old zoom
+        public bool m_servDisableTombstones = false;                // Whether to disable tombstones for this player (used by server)
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -272,6 +272,8 @@ namespace CrowdControlMod
                 player.respawnTimer = m_reducedCooldown;
                 m_reduceRespawn = false;
             }
+            else
+                player.respawnTimer = (int)(player.respawnTimer *CCServer._respawnTimeFactor);
 
             UpdateDeathPoint();
 
@@ -281,11 +283,8 @@ namespace CrowdControlMod
         // Set the death point if far from spawn
         private void UpdateDeathPoint()
         {
-            if (Vector2.Distance(new Vector2((int)(player.position.X / 16), (int)(player.position.Y / 16)), new Vector2(player.SpawnX, player.SpawnY)) > m_deathMinDistT)
-            {
-                m_deathPoint = player.position;
-                TDebug.WriteDebug("Saved death position: " + m_deathPoint, Color.Yellow);
-            }
+            m_deathPoint = player.position;
+            TDebug.WriteDebug("Saved death position: " + m_deathPoint, Color.Yellow);
         }
 
         // Teleport the player to the previous death point

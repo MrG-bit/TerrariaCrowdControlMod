@@ -12,7 +12,7 @@ namespace CrowdControlMod
 {
     public static class TDebug
     {
-        public static readonly bool IN_DEBUG = true;
+        public static readonly bool IN_DEBUG = false;
 
         // Send a message in chat if IN_DEBUG is true
         public static void WriteDebug(string text, Color colour = default)

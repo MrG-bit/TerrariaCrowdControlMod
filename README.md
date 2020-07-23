@@ -12,8 +12,9 @@ Alternatively, the mod can be downloaded manually from the [Releases](https://gi
 * Singleplayer
 * Multiplayer with other Crowd Control users
 
-# Effects Available
+# Just Some of the Effects Available
 * Kill the player
+* Explode the player
 * Heal / damage the player
 * Increase movement speed / jump height
 * Teleport the player
@@ -28,9 +29,15 @@ Alternatively, the mod can be downloaded manually from the [Releases](https://gi
 * Set time / speed-up time
 * Flip the screen / fill the screen with fish?
 * Rainbow-ify the world
+* Drunk mode
 
 # Source
 This repository contains the source for the mod. You are not allowed to use the source code to publish your own Crowd Control mod. You would be unable to add new effects because that is handled on the Crowd Control servers.
+
+# Acknowledgements
+* Crowd Control devs: being very supportive and welcoming
+* TModLoader Discord users: helped me with coding
+* Oli: drunk mode screen shaders
 
 # Links
 * [Crowd Control](https://crowdcontrol.live)

@@ -38,6 +38,14 @@ namespace CrowdControlMod
 				{
 					Ref<Effect> flipVerticalRef = new Ref<Effect>(GetEffect("Effects/SH_FlipVertical"));
 					Filters.Scene["FlipVertical"] = new Filter(new ScreenShaderData(flipVerticalRef, "FilterMyShader"), EffectPriority.High);
+
+					Ref<Effect> sineRef = new Ref<Effect>(GetEffect("Effects/SH_Sine"));
+					Filters.Scene["Sine"] = new Filter(new ScreenShaderData(sineRef, "CreateSine"), EffectPriority.VeryHigh);
+					Filters.Scene["Sine"].Load();
+
+					Ref<Effect> glitchRef = new Ref<Effect>(GetEffect("Effects/SH_Glitch"));
+					Filters.Scene["Glitch"] = new Filter(new ScreenShaderData(glitchRef, "CreateGlitch"), EffectPriority.VeryHigh);
+					Filters.Scene["Glitch"].Load();
 				}
 				catch { };
 			}

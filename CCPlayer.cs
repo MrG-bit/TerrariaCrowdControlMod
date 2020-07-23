@@ -10,6 +10,8 @@ using Terraria;
 using Terraria.ModLoader;
 using Terraria.ID;
 using Terraria.DataStructures;
+using Terraria.Graphics.Effects;
+using System;
 
 namespace CrowdControlMod
 {
@@ -48,6 +50,7 @@ namespace CrowdControlMod
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
         private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
         private readonly int m_deathMinDistT = 180;                 // Minimum distance from spawn that deaths will count towards the deathPoint (in tiles)
+        public float m_oldZoom = -1f;                               // Old zoom
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -109,6 +112,25 @@ namespace CrowdControlMod
             {
                 if (CrowdControlMod._server != null)
                 {
+                    // Drunk shader
+                    if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
+                    {
+                        float drunkSineIntensity = CrowdControlMod._server.m_drunkGlitchIntensity;
+                        float drunkGlitchIntensity = CrowdControlMod._server.m_drunkGlitchIntensity;
+
+                        if (!Filters.Scene["Sine"].IsActive())
+                            Filters.Scene.Activate("Sine", player.Center).GetShader().UseIntensity(drunkSineIntensity);
+                        else
+                            Filters.Scene["Sine"].GetShader().UseIntensity(drunkSineIntensity).UseTargetPosition(player.Center);
+
+                        if (!Filters.Scene["Glitch"].IsActive())
+                            Filters.Scene.Activate("Glitch", player.Center).GetShader().UseIntensity(drunkGlitchIntensity);
+                        else
+                            Filters.Scene["Glitch"].GetShader().UseIntensity(drunkGlitchIntensity).UseTargetPosition(player.Center);
+
+                        Main.GameZoomTarget = 1.2f + ((float)Math.Sin(Main.GlobalTime * 2.2f) * 0.2f);
+                    }
+
                     // Infinite mana
                     if (CrowdControlMod._server.m_infiniteManaTimer.Enabled)
                         player.statMana = player.statManaMax2;

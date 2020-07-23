@@ -142,6 +142,7 @@ namespace CrowdControlMod
 		public readonly Timer m_fishWallTimer = null;
 		public readonly Timer m_rainbowScreenTimer = null;
 		public readonly Timer m_corruptScreenTimer = null;
+		public readonly Timer m_drunkScreenTimer = null;
 
 		// Times for the various effects (in seconds)
 		public readonly int m_timeFastPlayer = 25;
@@ -171,6 +172,7 @@ namespace CrowdControlMod
 		public readonly int m_timeDarkScreen = 25;
 		public readonly int m_timeRainbowScreen = 25;
 		public readonly int m_timeCorruptScreen = 25;
+		public readonly int m_timeDrunkScreen = 25;
 
         #endregion
 
@@ -231,6 +233,8 @@ namespace CrowdControlMod
 		private readonly int m_guardianSurvivalTime = 60 * 6;				// How long the player needs to survive the dungeon guardian for to "win"
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
+		public readonly float m_drunkSineIntensity = 0.05f;					// Sine intensity for drunk shader
+		public readonly float m_drunkGlitchIntensity = 24f;					// Glitch intensity for drunk shader
 
         #endregion
 
@@ -375,6 +379,13 @@ namespace CrowdControlMod
 					AutoReset = false
 				};
 				m_corruptScreenTimer.Elapsed += delegate { StopEffect("cam_corrupt"); };
+
+				m_drunkScreenTimer = new Timer
+				{
+					Interval = 1000 * m_timeDrunkScreen,
+					AutoReset = false
+				};
+				m_drunkScreenTimer.Elapsed += delegate { StopEffect("cam_drunk"); };
 			}
         }
 
@@ -444,6 +455,8 @@ namespace CrowdControlMod
 				StopEffect("cam_rainbow");
 			if (m_corruptScreenTimer.Enabled)
 				StopEffect("cam_corrupt");
+			if (m_drunkScreenTimer.Enabled)
+				StopEffect("cam_drunk");
 
 			m_prevPets.Clear();
         }
@@ -913,6 +926,12 @@ namespace CrowdControlMod
 					ShowEffectMessage(3617, viewer + " corrupted the screen for " + m_timeCorruptScreen + " seconds", MSG_C_NEUTRAL);
 					break;
 
+				case "cam_drunk":
+					if (m_drunkScreenTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_drunkScreenTimer);
+					m_player.m_oldZoom = Main.GameZoomTarget;
+					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
+					break;
 			}
 
             TDebug.WriteDebug(viewer + " ran [" + code + "]", Color.Yellow);
@@ -1005,6 +1024,14 @@ namespace CrowdControlMod
 				case "cam_corrupt":
 					m_corruptScreenTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "The screen is no longer corrupted", MSG_C_TIMEREND);
+					break;
+
+				case "cam_drunk":
+					if (Filters.Scene["Sine"].IsActive()) Filters.Scene.Deactivate("Sine");
+					if (Filters.Scene["Glitch"].IsActive()) Filters.Scene.Deactivate("Glitch");
+					Main.GameZoomTarget = m_player.m_oldZoom;
+					m_drunkScreenTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer drunk", MSG_C_TIMEREND);
 					break;
 			}
 

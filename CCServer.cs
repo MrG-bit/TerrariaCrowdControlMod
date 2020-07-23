@@ -140,6 +140,8 @@ namespace CrowdControlMod
 		public readonly Timer m_invisTimer = null;
 		public readonly Timer m_flipCameraTimer = null;
 		public readonly Timer m_fishWallTimer = null;
+		public readonly Timer m_rainbowScreenTimer = null;
+		public readonly Timer m_corruptScreenTimer = null;
 
 		// Times for the various effects (in seconds)
 		public readonly int m_timeFastPlayer = 25;
@@ -167,6 +169,8 @@ namespace CrowdControlMod
 		public readonly int m_timeFlipScreen = 25;
 		public readonly int m_timeFishWall = 25;
 		public readonly int m_timeDarkScreen = 25;
+		public readonly int m_timeRainbowScreen = 25;
+		public readonly int m_timeCorruptScreen = 25;
 
         #endregion
 
@@ -214,7 +218,7 @@ namespace CrowdControlMod
 			267,268,274,284,285,286,287,288,289,290,291,
 			292,293,295,296,297,300,301,302,303,304,317*/
 		};
-		private readonly byte[] m_rainbowPaint =							// Paint IDs that form a somewhat-rainbow (in order)
+		public readonly byte[] m_rainbowPaint =								// Paint IDs that form a somewhat-rainbow (in order)
 		{
 			13,14,15,16,17,18,19,20,21,22,23,24
 		};
@@ -357,7 +361,21 @@ namespace CrowdControlMod
 					AutoReset = false
 				};
 				m_fishWallTimer.Elapsed += delegate { StopEffect("cam_fish"); };
-            }
+
+				m_rainbowScreenTimer = new Timer
+				{
+					Interval = 1000 * m_timeRainbowScreen,
+					AutoReset = false
+				};
+				m_rainbowScreenTimer.Elapsed += delegate { StopEffect("cam_rainbow"); };
+
+				m_corruptScreenTimer = new Timer
+				{
+					Interval = 1000 * m_timeCorruptScreen,
+					AutoReset = false
+				};
+				m_corruptScreenTimer.Elapsed += delegate { StopEffect("cam_corrupt"); };
+			}
         }
 
         // Start the server
@@ -422,6 +440,10 @@ namespace CrowdControlMod
                 StopEffect("cam_flip");
 			if (m_fishWallTimer.Enabled)
 				StopEffect("cam_fish");
+			if (m_rainbowScreenTimer.Enabled)
+				StopEffect("cam_rainbow");
+			if (m_corruptScreenTimer.Enabled)
+				StopEffect("cam_corrupt");
 
 			m_prevPets.Clear();
         }
@@ -698,7 +720,7 @@ namespace CrowdControlMod
 					ResetTimer(m_rainbowPaintTimer);
 					m_rainbowIndex = Main.rand.Next(m_rainbowPaint.Length);
 					m_rainbowTiles.Clear();
-					ShowEffectMessage(662, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
+					ShowEffectMessage(1066, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "shoot_bomb":
@@ -879,6 +901,18 @@ namespace CrowdControlMod
 					ShowEffectMessage(1311, viewer + " darkened the screen for " + m_timeDarkScreen +" seconds", MSG_C_NEGATIVE);
 					break;
 
+				case "cam_rainbow":
+					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_rainbowScreenTimer);
+					ShowEffectMessage(662, viewer + " covered the screen in rainbows for " + m_timeRainbowScreen + " seconds", MSG_C_NEUTRAL);
+					break;
+
+				case "cam_corrupt":
+					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_corruptScreenTimer);
+					ShowEffectMessage(3617, viewer + " corrupted the screen for " + m_timeCorruptScreen + " seconds", MSG_C_NEUTRAL);
+					break;
+
 			}
 
             TDebug.WriteDebug(viewer + " ran [" + code + "]", Color.Yellow);
@@ -921,7 +955,7 @@ namespace CrowdControlMod
 
 				case "tile_paint":
 					m_rainbowPaintTimer.Stop();
-					ShowEffectMessage(MSG_ITEM_TIMEREND, "Rainbows are no longer forming", MSG_C_TIMEREND);
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer spreading the rainbow", MSG_C_TIMEREND);
 					break;
 
 				case "shoot_bomb":
@@ -961,6 +995,16 @@ namespace CrowdControlMod
 				case "cam_fish":
 					m_fishWallTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Fish is no longer covering the screen", MSG_C_TIMEREND);
+					break;
+
+				case "cam_rainbow":
+					m_rainbowScreenTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "The screen is no longer covered in rainbows", MSG_C_TIMEREND);
+					break;
+
+				case "cam_corrupt":
+					m_corruptScreenTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "The screen is no longer corrupted", MSG_C_TIMEREND);
 					break;
 			}
 

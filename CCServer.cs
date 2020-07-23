@@ -569,13 +569,39 @@ namespace CrowdControlMod
 				case "healplr":
 					if (m_player.player.statLife == m_player.player.statLifeMax2) return EffectResult.FAILURE;
 					m_player.player.statLife = m_player.player.statLifeMax2;
-                    ShowEffectMessage(29, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
+                    ShowEffectMessage(58, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
                 case "damplr":
 					int life = (int)(m_player.player.statLife * (m_damagePlayerPerc + Main.rand.NextFloat(-m_damagePlayerPercPM, m_damagePlayerPercPM)));
 					m_player.player.statLife = life;
 					ShowEffectMessage(3106, viewer + " severely damaged " + m_player.player.name, MSG_C_NEGATIVE);
+					break;
+
+				case "plr_inclife":
+					if (m_player.player.statLifeMax >= 500) return EffectResult.FAILURE;
+					m_player.player.statLifeMax += 20;
+					m_player.player.statLife += 20;
+					ShowEffectMessage(29, viewer + " added 20 health to " + m_player.player.name + "'s total health", MSG_C_POSITIVE);
+					break;
+
+				case "plr_declife":
+					if (m_player.player.statLifeMax <= 20) return EffectResult.FAILURE;
+					m_player.player.statLifeMax -= 20;
+					ShowEffectMessage(29, viewer + " removed 20 health from " + m_player.player.name + "'s total health", MSG_C_NEGATIVE);
+					break;
+
+				case "plr_incmana":
+					if (m_player.player.statManaMax >= 200) return EffectResult.FAILURE;
+					m_player.player.statManaMax += 20;
+					m_player.player.statMana += 20;
+					ShowEffectMessage(109, viewer + " added 20 mana to " + m_player.player.name + "'s total mana", MSG_C_POSITIVE);
+					break;
+
+				case "plr_decmana":
+					if (m_player.player.statManaMax <= 20) return EffectResult.FAILURE;
+					m_player.player.statManaMax -= 20;
+					ShowEffectMessage(109, viewer + " removed 20 mana from " + m_player.player.name + "'s total mana", MSG_C_NEGATIVE);
 					break;
 
 				case "fastplr":
@@ -648,7 +674,7 @@ namespace CrowdControlMod
 				case "plr_mana":
 					if (m_infiniteManaTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_infiniteManaTimer);
-					ShowEffectMessage(109, viewer + " blessed " + m_player.player.name + " with infinite magical power for " + m_timeInfiniteMana + " seconds", MSG_C_POSITIVE);
+					ShowEffectMessage(555, viewer + " blessed " + m_player.player.name + " with infinite magical power for " + m_timeInfiniteMana + " seconds", MSG_C_POSITIVE);
 					break;
 
 				case "plr_ammo":

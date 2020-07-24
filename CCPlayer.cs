@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-23
+/// Last Updated: 2020-07-24
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -12,11 +12,29 @@ using Terraria.ID;
 using Terraria.DataStructures;
 using Terraria.Graphics.Effects;
 using System;
+using System.Text;
 
 namespace CrowdControlMod
 {
     public class CCPlayer : ModPlayer
     {
+        public enum EHairDye : int
+        {
+            NONE = ItemID.HairDyeRemover,
+            LIFE = ItemID.LifeHairDye,
+            MANA = ItemID.ManaHairDye,
+            DEPTH = ItemID.DepthHairDye,
+            MONEY = ItemID.MoneyHairDye,
+            TIME = ItemID.TimeHairDye,
+            TEAM = ItemID.TeamHairDye,
+            BIOME = ItemID.BiomeHairDye,
+            PARTY = ItemID.PartyHairDye,
+            RAINBOW = ItemID.RainbowHairDye,
+            SPEED = ItemID.SpeedHairDye,
+            MARTIAN = ItemID.MartianHairDye,
+            TWILIGHT = ItemID.TwilightHairDye
+        }
+
         private readonly static short[] m_explosives =              // Explosives that can be shot
         {
             ProjectileID.Bomb,
@@ -51,6 +69,8 @@ namespace CrowdControlMod
         private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
         public float m_oldZoom = -1f;                               // Old zoom
         public bool m_servDisableTombstones = false;                // Whether to disable tombstones for this player (used by server)
+        public bool m_ignoreImmuneConfusion = false;                // Whether the player is to ignore immunity to confusion whilst the debuff is active
+        public bool m_ignoreImmuneFrozen = false;                   // Whether the player is to ignore immunity to frozen whilst the debuff is active
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -101,6 +121,14 @@ namespace CrowdControlMod
                 drawInfo.position = Vector2.Zero;
 
             base.ModifyDrawInfo(ref drawInfo);
+        }
+
+        // Called after updating accessories
+        public override void UpdateVanityAccessories()
+        {
+            CheckImmunities();
+
+            base.UpdateVanityAccessories();
         }
 
         // Called at the end of each player update
@@ -364,6 +392,49 @@ namespace CrowdControlMod
                 if (!player.HasBuff(buffs[i]))
                     return false;
             return true;
+        }
+
+        // Set the player's hair dye
+        public void SetHairDye(EHairDye hairDye)
+        {
+            if (CCServer.m_disableHairDye) return;
+
+            Item item = new Item();
+            item.SetDefaults((int)hairDye);
+            player.hairDye = (byte)item.hairDye;
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+                NetMessage.SendData(MessageID.SyncPlayer, -1, -1, null, player.whoAmI);
+        }
+
+        // Check if should ignore immunities
+        private void CheckImmunities()
+        {
+            // Ignore immunity to confusion
+            if (m_ignoreImmuneConfusion)
+            {
+                if (HasBuff(BuffID.Confused))
+                    player.buffImmune[BuffID.Confused] = false;
+                else
+                    m_ignoreImmuneConfusion = false;
+            }
+
+            // Ignore immunity to frozen
+            if (m_ignoreImmuneFrozen)
+            {
+                if (HasBuff(BuffID.Frozen))
+                    player.buffImmune[BuffID.Frozen] = false;
+                else
+                    m_ignoreImmuneFrozen = false;
+            }
+        }
+
+        // Check if the player has a buff, even if immune
+        private bool HasBuff(int type)
+        {
+            for (int i = 0; i < Player.MaxBuffs; i++)
+                if (player.buffTime[i] >= 1 && player.buffType[i] == type)
+                    return true;
+            return false;
         }
     }
 }

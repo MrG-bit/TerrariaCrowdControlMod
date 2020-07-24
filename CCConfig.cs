@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-07-23
+/// Last Updated: 2020-07-24
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
@@ -38,6 +38,11 @@ namespace CrowdControlMod
         [DefaultValue(1f)]
         public float RespawnTime;
 
+        [Label("Allow Effects To Set Hair Dye")]
+        [Tooltip("Disable this to stop certain effects from changing the player's hair dye.")]
+        [DefaultValue(true)]
+        public bool UseHairDyes;
+
         // Called when configuration parameters are changed by the user
         public override void OnChanged()
         {
@@ -45,6 +50,7 @@ namespace CrowdControlMod
             CCServer._shouldConnectToCC = ConnectToCrowdControl;
             CCServer._disableTombstones = DisableTombstones;
             CCServer._respawnTimeFactor = RespawnTime;
+            CCServer.m_disableHairDye = !UseHairDyes;
 
             if (CrowdControlMod._server != null)
                 CrowdControlMod._server.SendConfigToServer();

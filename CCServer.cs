@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-23
+/// Last Updated: 2020-07-24
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -16,7 +16,6 @@ using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
-using System.Security.Policy;
 
 namespace CrowdControlMod
 {
@@ -24,7 +23,7 @@ namespace CrowdControlMod
 	{
         #region Network Types
 
-		// bool isServer, int sender
+		// byte effect, int sender
         public enum EPacketEffect : byte
 		{
 			CC_CONNECT,         // Broadcasts a message to the server when a client connects to Crowd Control
@@ -36,10 +35,6 @@ namespace CrowdControlMod
 			SET_SPEED,			// bool enabled
 			SET_JUMP,			// bool enabled
 			START_SUNDIAL,
-			SPAWN_DUST,			// int type, int x, int y, int sizeX, int sizeY, int speedX, int speedY, float scale, int count
-			SPAWN_GORE,			// int type, int x, int y, int speedX, int speedY, float scale, int count
-			SPAWN_EXPLODE,		// int type, int x, int y, int timeLeft
-			DISABLE_PROJ,		// int id
 			SEND_CONFIG,		// bool disableTombstones
 		}
 
@@ -237,7 +232,8 @@ namespace CrowdControlMod
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
 		public readonly float m_drunkSineIntensity = 0.05f;					// Sine intensity for drunk shader
-		public readonly float m_drunkGlitchIntensity = 24f;					// Glitch intensity for drunk shader
+		public readonly float m_drunkGlitchIntensity = 24f;                 // Glitch intensity for drunk shader
+		private readonly int m_timeLovestruck = 4;							// Time to show the lovestruck particles
 
         #endregion
 
@@ -258,7 +254,8 @@ namespace CrowdControlMod
 		public static bool _showEffectMessages = true;                      // Whether to show effect messages in chat
 		public static bool _shouldConnectToCC = true;                       // Whether to connect to crowd control
 		public static bool _disableTombstones = false;                      // Disable tombstones
-		public static float _respawnTimeFactor = 1f;						// Respawn time factor
+		public static float _respawnTimeFactor = 1f;                        // Respawn time factor
+		public static bool m_disableHairDye = false;						// Whether to disable hair dye effects
 
         #endregion
 
@@ -497,7 +494,7 @@ namespace CrowdControlMod
                 {
 					TDebug.WriteMessage(1525, "Connected to Crowd Control", Color.Green);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendDataToServer(EPacketEffect.CC_CONNECT);
+						SendData(EPacketEffect.CC_CONNECT);
                     while (m_activeSocket.Connected && m_activeSocket.Poll(1000, SelectMode.SelectWrite) && ClientLoop(m_activeSocket)) ;
                     try { m_activeSocket.Shutdown(SocketShutdown.Both); }
                     finally { m_activeSocket.Close(); }
@@ -609,6 +606,7 @@ namespace CrowdControlMod
 				case "healplr":
 					if (m_player.player.statLife == m_player.player.statLifeMax2) return EffectResult.FAILURE;
 					m_player.player.statLife = m_player.player.statLifeMax2;
+					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
                     ShowEffectMessage(58, viewer + " healed " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
@@ -622,6 +620,7 @@ namespace CrowdControlMod
 					if (m_player.player.statLifeMax >= 500) return EffectResult.FAILURE;
 					m_player.player.statLifeMax += 20;
 					m_player.player.statLife += 20;
+					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
 					ShowEffectMessage(29, viewer + " added 20 health to " + m_player.player.name + "'s total health", MSG_C_POSITIVE);
 					break;
 
@@ -635,6 +634,7 @@ namespace CrowdControlMod
 					if (m_player.player.statManaMax >= 200) return EffectResult.FAILURE;
 					m_player.player.statManaMax += 20;
 					m_player.player.statMana += 20;
+					m_player.SetHairDye(CCPlayer.EHairDye.MANA);
 					ShowEffectMessage(109, viewer + " added 20 mana to " + m_player.player.name + "'s total mana", MSG_C_POSITIVE);
 					break;
 
@@ -648,7 +648,8 @@ namespace CrowdControlMod
 					if (m_fastPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_fastPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendDataToServer(EPacketEffect.SET_SPEED, true);
+						SendData(EPacketEffect.SET_SPEED, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.SPEED);
 					ShowEffectMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -656,13 +657,14 @@ namespace CrowdControlMod
 					if (m_jumpPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_jumpPlayerTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendDataToServer(EPacketEffect.SET_JUMP, true);
+						SendData(EPacketEffect.SET_JUMP, true);
 					ShowEffectMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "slipplr":
 					if (m_slipPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_slipPlayerTimer);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Wet, 60 * m_timeSlipPlayer);
 					ShowEffectMessage(950, viewer + " made the ground very slippery", MSG_C_NEGATIVE);
 					break;
 
@@ -674,6 +676,7 @@ namespace CrowdControlMod
 						m_player.player.TeleportationPotion();
 						Main.PlaySound(Terraria.ID.SoundID.Item6, m_player.player.position);
 					}
+					m_player.SetHairDye(CCPlayer.EHairDye.BIOME);
 					ShowEffectMessage(2351, viewer + " randomly teleported " + m_player.player.name, MSG_C_NEUTRAL);
                     break;
 
@@ -698,8 +701,9 @@ namespace CrowdControlMod
 					break;
 
 				case "item_money":
-					int coins = Item.buyPrice(0, 0, Main.rand.Next(25, 100), 0);
+					int coins = Item.buyPrice(0, 0, Main.rand.Next(50, 150), 0);
 					m_player.GiveCoins(coins);
+					m_player.SetHairDye(CCPlayer.EHairDye.MONEY);
 					ShowEffectMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
@@ -714,6 +718,7 @@ namespace CrowdControlMod
 				case "plr_mana":
 					if (m_infiniteManaTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_infiniteManaTimer);
+					m_player.SetHairDye(CCPlayer.EHairDye.MANA);
 					ShowEffectMessage(555, viewer + " blessed " + m_player.player.name + " with infinite magical power for " + m_timeInfiniteMana + " seconds", MSG_C_POSITIVE);
 					break;
 
@@ -730,6 +735,7 @@ namespace CrowdControlMod
 				case "plr_gender":
 					m_player.player.Male = !m_player.player.Male;
 					Main.PlaySound(Terraria.ID.SoundID.Item6, m_player.player.position);
+					m_player.SetHairDye(CCPlayer.EHairDye.PARTY);
 					ShowEffectMessage(2756, viewer + " changed " + m_player.player.name + " to a " + (m_player.player.Male ? "boy" : "girl"), MSG_C_NEUTRAL);
 					break;
 
@@ -738,6 +744,7 @@ namespace CrowdControlMod
 					ResetTimer(m_rainbowPaintTimer);
 					m_rainbowIndex = Main.rand.Next(m_rainbowPaint.Length);
 					m_rainbowTiles.Clear();
+					m_player.SetHairDye(CCPlayer.EHairDye.RAINBOW);
 					ShowEffectMessage(1066, viewer + " caused a rainbow to form underneath " + m_player.player.name + " for " + m_timeRainbowPaint + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -768,15 +775,14 @@ namespace CrowdControlMod
 							return EffectResult.RETRY;
 					}
 					else
-						SendDataToServer(EPacketEffect.GEN_STRUCT, viewer);
+						SendData(EPacketEffect.GEN_STRUCT, viewer);
                     break;
 
                 case "sp_guard":
-					m_player.m_reduceRespawn = true;
 					Vector2 circlePos = Main.rand.NextVector2CircularEdge(m_spawnGuardHalfWidth, m_spawnGuardHalfHeight);
 					Point spawnPos = new Point((int)m_player.player.position.X + (int)circlePos.X, (int)m_player.player.position.Y + (int)circlePos.Y);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_guardians.Add(new Tuple<int, int>(NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian), m_guardianSurvivalTime));
-					else SendDataToServer(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
+					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
                     ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
 
@@ -788,13 +794,15 @@ namespace CrowdControlMod
 					if (m_increasedSpawnsTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_increasedSpawnsTimer);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = m_increaseSpawnRate;
-					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
+					else SendData(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
                     ShowEffectMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
                     break;
 
 				case "buff_freeze":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Frozen)) return EffectResult.RETRY;
+					m_player.player.buffImmune[Terraria.ID.BuffID.Frozen] = false;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Frozen, 60 * m_timeBuffFreeze, true);
+					m_player.m_ignoreImmuneFrozen = true;
 					ShowEffectMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 
@@ -819,8 +827,10 @@ namespace CrowdControlMod
 
                 case "buff_confuse":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Confused)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Confused, 60 * m_timeBuffConf, true);
-                    ShowEffectMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
+					m_player.player.buffImmune[Terraria.ID.BuffID.Confused] = false;
+					m_player.player.AddBuff(Terraria.ID.BuffID.Confused, 60 * m_timeBuffConf, true);
+					m_player.m_ignoreImmuneConfusion = true;
+					ShowEffectMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
 				case "buff_invis":
@@ -839,7 +849,10 @@ namespace CrowdControlMod
                 case "buff_regen":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Regeneration, Terraria.ID.BuffID.ManaRegeneration)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Regeneration, 60 * m_timeBuffRegen, true);
+                    m_player.player.AddBuff(Terraria.ID.BuffID.SoulDrain, 60 * m_timeBuffRegen, true);
                     m_player.player.AddBuff(Terraria.ID.BuffID.ManaRegeneration, 60 * m_timeBuffRegen, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.LIFE);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
                     ShowEffectMessage(289, viewer + " provided " + m_player.player.name + " with regeneration buffs", MSG_C_POSITIVE);
                     break;
 
@@ -847,6 +860,7 @@ namespace CrowdControlMod
 					if (m_player.HasBuff(Terraria.ID.BuffID.NightOwl, Terraria.ID.BuffID.Shine)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.NightOwl, 60 * m_timeBuffLight, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Shine, 60 * m_timeBuffLight, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.MARTIAN);
 					ShowEffectMessage(3043, viewer + " provided " + m_player.player.name + " with light", MSG_C_POSITIVE);
 					break;
 
@@ -855,12 +869,14 @@ namespace CrowdControlMod
 					m_player.player.AddBuff(Terraria.ID.BuffID.Spelunker, 60 * m_timeBuffTreasure, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Hunter, 60 * m_timeBuffTreasure, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Dangersense, 60 * m_timeBuffTreasure, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.DEPTH);
 					ShowEffectMessage(306, viewer + " helped " + m_player.player.name + " to search for treasure", MSG_C_POSITIVE);
 					break;
 
 				case "buff_life":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Lifeforce)) return EffectResult.RETRY;
                     m_player.player.AddBuff(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife, true);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
                     ShowEffectMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
@@ -869,13 +885,15 @@ namespace CrowdControlMod
 					m_player.player.AddBuff(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.SPEED);
 					ShowEffectMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
 				case "inc_time":
 					if (Main.fastForwardTime) return EffectResult.RETRY;
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) Main.fastForwardTime = true;
-					else SendDataToServer(EPacketEffect.START_SUNDIAL);
+					else SendData(EPacketEffect.START_SUNDIAL);
+					m_player.SetHairDye(CCPlayer.EHairDye.TIME);
 					ShowEffectMessage(3064, viewer + " advanced time to sunrise", MSG_C_NEUTRAL);
                     break;
 
@@ -910,18 +928,21 @@ namespace CrowdControlMod
 				case "cam_fish":
 					if (m_fishWallTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_fishWallTimer);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Stinky, 60 * (m_timeFishWall + 4));
 					ShowEffectMessage(669, viewer + " covered the screen with fish for " + m_timeFishWall + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "cam_darken":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Obstructed)) return EffectResult.RETRY;
 					m_player.player.AddBuff(Terraria.ID.BuffID.Obstructed, 60 * m_timeDarkScreen, true);
+					m_player.SetHairDye(CCPlayer.EHairDye.TWILIGHT);
 					ShowEffectMessage(1311, viewer + " darkened the screen for " + m_timeDarkScreen +" seconds", MSG_C_NEGATIVE);
 					break;
 
 				case "cam_rainbow":
 					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_rainbowScreenTimer);
+					m_player.SetHairDye(CCPlayer.EHairDye.RAINBOW);
 					ShowEffectMessage(662, viewer + " covered the screen in rainbows for " + m_timeRainbowScreen + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -935,6 +956,7 @@ namespace CrowdControlMod
 					if (m_drunkScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_drunkScreenTimer);
 					m_player.m_oldZoom = Main.GameZoomTarget;
+					m_player.SetHairDye(CCPlayer.EHairDye.TWILIGHT);
 					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
 					break;
 			}
@@ -951,14 +973,14 @@ namespace CrowdControlMod
 				case "fastplr":
 					m_fastPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendDataToServer(EPacketEffect.SET_SPEED, false);
+						SendData(EPacketEffect.SET_SPEED, false);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "jumpplr":
 					m_jumpPlayerTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendDataToServer(EPacketEffect.SET_JUMP, false);
+						SendData(EPacketEffect.SET_JUMP, false);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
 					break;
 
@@ -1000,7 +1022,7 @@ namespace CrowdControlMod
 				case "inc_spawnrate":
                     m_increasedSpawnsTimer.Stop();
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = 1f;
-					else SendDataToServer(EPacketEffect.SET_SPAWNRATE, 1f);
+					else SendData(EPacketEffect.SET_SPAWNRATE, 1f);
                     ShowEffectMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
 					break;
 
@@ -1265,21 +1287,21 @@ namespace CrowdControlMod
             {
 				type = WorldGen.crimson ? Terraria.ID.NPCID.CrimsonBunny : Terraria.ID.NPCID.CorruptBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
 				ShowEffectMessage(1338, viewer + " spawned an Evil Bunny", MSG_C_NEGATIVE);
             }
             else if (Main.rand.Next(0, 100) < 5)
             {
 				type = Terraria.ID.NPCID.GoldBunny;
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
                 ShowEffectMessage(2890, viewer + " spawned a Gold Bunny", MSG_C_POSITIVE);
             }
             else
             {
                 type = Main.rand.Next(new short[] { Terraria.ID.NPCID.Bunny, Terraria.ID.NPCID.BunnySlimed, Terraria.ID.NPCID.BunnyXmas, Terraria.ID.NPCID.PartyBunny });
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, type);
-				else SendDataToServer(EPacketEffect.SPAWN_NPC, type, px, py);
+				else SendData(EPacketEffect.SPAWN_NPC, type, px, py);
                 ShowEffectMessage(2019, viewer + " spawned a Bunny", MSG_C_NEUTRAL);
             }
         }
@@ -1911,7 +1933,7 @@ namespace CrowdControlMod
 			}
 			else
 			{
-				SendDataToServer(EPacketEffect.SET_TIME, time, dayTime);
+				SendData(EPacketEffect.SET_TIME, time, dayTime);
 			}
 		}
 
@@ -1929,7 +1951,7 @@ namespace CrowdControlMod
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					WorldGen.paintTile(x, y, colour, false);
 				else
-					SendDataToServer(EPacketEffect.SET_PAINTTILE, x, y, colour);
+					SendData(EPacketEffect.SET_PAINTTILE, x, y, colour);
 			}
 
 			// Rainbowify if not already rainbowified
@@ -1938,7 +1960,7 @@ namespace CrowdControlMod
 				if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 					WorldGen.paintTile(x, y, m_rainbowPaint[m_rainbowIndex], false);
 				else
-					SendDataToServer(EPacketEffect.SET_PAINTTILE, x, y, m_rainbowPaint[m_rainbowIndex]);
+					SendData(EPacketEffect.SET_PAINTTILE, x, y, m_rainbowPaint[m_rainbowIndex]);
 
 				m_rainbowTiles.Add(Main.tile[x, y]);
 				m_rainbowIndex = (m_rainbowIndex + 1) % m_rainbowPaint.Length;
@@ -2027,7 +2049,7 @@ namespace CrowdControlMod
         }
 
 		// Send a modded effect packet to the server (as client)
-		public void SendDataToServer(EPacketEffect packetEffect, params object[] data)
+		public void SendData(EPacketEffect packetEffect, params object[] data)
 		{
 			if (Main.dedServ)
 				return;
@@ -2035,7 +2057,6 @@ namespace CrowdControlMod
 			try
 			{
 				ModPacket packet = CrowdControlMod._mod.GetPacket(data.Length);
-				packet.Write(true);
 				packet.Write((byte)packetEffect);
 				packet.Write(Main.myPlayer);
 				if (data != null)
@@ -2050,42 +2071,15 @@ namespace CrowdControlMod
 			catch (Exception e) { TDebug.WriteDebug("Failed to send modded packet: " + e.Message, Color.Yellow); }
 		}
 
-		// Send a modded effect packet to all clients (as server)
-		public void SendDataToClients(EPacketEffect packetEffect, params object[] data)
-        {
-			if (!Main.dedServ)
-				return;
-
-			try
-			{
-				ModPacket packet = CrowdControlMod._mod.GetPacket(data.Length);
-				packet.Write(false);
-				packet.Write((byte)packetEffect);
-				packet.Write(Main.myPlayer);
-				if (data != null)
-				{
-					for (int i = 0; i < data.Length; ++i)
-						WriteToPacket(packet, data[i]);
-				}
-				packet.Send(-1, -1);
-				TDebug.WriteDebug("Server sent packet type: " + packetEffect, Color.Yellow);
-
-			}
-			catch (Exception e) { TDebug.WriteDebug("Failed to send modded packet: " + e.Message, Color.Yellow); }
-		}
-
 		// Route an incoming packet to the correct handler
 		public void RouteIncomingPacket(BinaryReader reader)
         {
-			bool isForServer = reader.ReadBoolean();
-			EPacketEffect effect = (EPacketEffect)reader.ReadByte();
-			int sender = reader.ReadInt32();
-			if (isForServer) HandleDataAsServer(effect, sender, reader);
-			else HandleDataAsClient(effect, sender, reader);
+			if (Main.dedServ)
+				HandleData((EPacketEffect)reader.ReadByte(), reader.ReadInt32(), reader);
         }
 
 		// Handle a modded effect packet (as server)
-		private void HandleDataAsServer(EPacketEffect packetEffect, int sender, BinaryReader reader)
+		private void HandleData(EPacketEffect packetEffect, int sender, BinaryReader reader)
 		{
 			string debugText = "Server received packet type: " + packetEffect + " (";
 			int x, y;
@@ -2144,70 +2138,10 @@ namespace CrowdControlMod
 					Main.fastForwardTime = true;
 					NetMessage.SendData(Terraria.ID.MessageID.WorldData, -1, -1, null);
 					break;
-				case EPacketEffect.SPAWN_EXPLODE:
-					type = reader.ReadInt32();
-					x = reader.ReadInt32();
-					y = reader.ReadInt32();
-					int timeLeft = reader.ReadInt32();
-					SendDataToClients(EPacketEffect.SPAWN_EXPLODE, type, x, y, timeLeft);
-					debugText += type + ", " + x + ", " + y + ", " + timeLeft;
-					break;
-				case EPacketEffect.DISABLE_PROJ:
-					id = reader.ReadInt32();
-					Main.projectile[id].active = false;
-					NetMessage.SendData(Terraria.ID.MessageID.SyncProjectile, -1, -1, null, id);
-					debugText += id;
-					break;
 				case EPacketEffect.SEND_CONFIG:
 					bool disableTombstones = reader.ReadBoolean();
 					Main.player[sender].GetModPlayer<CCPlayer>().m_servDisableTombstones = disableTombstones;
 					debugText += disableTombstones;
-					break;
-			}
-
-			TDebug.WriteDebug(debugText + ") from " + Main.player[sender].name, Color.Yellow);
-		}
-
-		// Handle a modded effect packet (as client)
-		private void HandleDataAsClient(EPacketEffect packetEffect, int sender, BinaryReader reader)
-        {
-			string debugText = "Client received packet type: " + packetEffect + " (";
-			int type, x, y, sizeX, sizeY, speedX, speedY, count;
-			float scale;
-			switch (packetEffect)
-			{
-				case EPacketEffect.SPAWN_DUST:
-					type = reader.ReadInt32();
-					x = reader.ReadInt32();
-					y = reader.ReadInt32();
-					sizeX = reader.ReadInt32();
-					sizeY = reader.ReadInt32();
-					speedX = reader.ReadInt32();
-					speedY = reader.ReadInt32();
-					scale = reader.ReadSingle();
-					count = reader.ReadInt32();
-					for (int b = 0; b < count; b++)
-						Dust.NewDust(new Vector2(x, y), sizeX, sizeY, type, speedX, speedY, 0, Color.White, scale);
-					debugText += type + ", " + x + ", " + y + ", " + speedX + ", " + speedY;
-					break;
-				case EPacketEffect.SPAWN_GORE:
-					type = reader.ReadInt32();
-					x = reader.ReadInt32();
-					y = reader.ReadInt32();
-					speedX = reader.ReadInt32();
-					speedY = reader.ReadInt32();
-					scale = reader.ReadSingle();
-					count = reader.ReadInt32();
-					for (int b = 0; b < count; b++)
-						Gore.NewGore(new Vector2(x, y), new Vector2(speedX, speedY), type, scale);
-					break;
-				case EPacketEffect.SPAWN_EXPLODE:
-					type = reader.ReadInt32();
-					x = reader.ReadInt32();
-					y = reader.ReadInt32();
-					int timeLeft = reader.ReadInt32();
-					int dynID = Projectile.NewProjectile(new Vector2(x, y), Vector2.Zero, type, 1, 1f, sender);
-					Main.projectile[dynID].timeLeft = timeLeft;
 					break;
 			}
 
@@ -2232,7 +2166,7 @@ namespace CrowdControlMod
 		public void SendConfigToServer()
         {
 			if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-				SendDataToServer(EPacketEffect.SEND_CONFIG, _disableTombstones);
+				SendData(EPacketEffect.SEND_CONFIG, _disableTombstones);
         }
 
 		// Set the ModPlayer instance affected by Crowd Control Effects (note that the mod should be used in Singleplayer)

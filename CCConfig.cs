@@ -5,7 +5,6 @@
 /// Description: Configuration for the mod.
 ///</summary>
 
-using IL.Terraria;
 using System.ComponentModel;
 using Terraria.ModLoader.Config;
 
@@ -43,6 +42,11 @@ namespace CrowdControlMod
         [DefaultValue(true)]
         public bool UseHairDyes;
 
+        [Label("Disable Effect Music")]
+        [Tooltip("Disable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
+        [DefaultValue(true)]
+        public bool DisableEffectMusic;
+
         // Called when configuration parameters are changed by the user
         public override void OnChanged()
         {
@@ -51,6 +55,7 @@ namespace CrowdControlMod
             CCServer._disableTombstones = DisableTombstones;
             CCServer._respawnTimeFactor = RespawnTime;
             CCServer.m_disableHairDye = !UseHairDyes;
+            CCServer.m_disableMusic = DisableEffectMusic;
 
             if (CrowdControlMod._server != null)
                 CrowdControlMod._server.SendConfigToServer();

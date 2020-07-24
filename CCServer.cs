@@ -32,10 +32,9 @@ namespace CrowdControlMod
 			SET_SPAWNRATE,      // float spawnRate
 			GEN_STRUCT,         // string viewer
 			SET_PAINTTILE,      // int x, int y, byte colour (Paints a tile with a colour)
-			SET_SPEED,			// bool enabled
-			SET_JUMP,			// bool enabled
 			START_SUNDIAL,
 			SEND_CONFIG,		// bool disableTombstones
+			TOWN_MAYHEM,		// bool enabled
 		}
 
 		private enum RequestType
@@ -128,6 +127,7 @@ namespace CrowdControlMod
         public readonly Timer m_fastPlayerTimer = null;
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_slipPlayerTimer = null;
+		public readonly Timer m_incCoinsTimer = null;
 		public readonly Timer m_infiniteManaTimer = null;
 		public readonly Timer m_infiniteAmmoTimer = null;
 		public readonly Timer m_rainbowPaintTimer = null;
@@ -146,6 +146,7 @@ namespace CrowdControlMod
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
 		public readonly int m_timeSlipPlayer = 25;
+		public readonly int m_timeIncCoins = 40;
 		public readonly int m_timeInfiniteMana = 25;
 		public readonly int m_timeInfiniteAmmo = 25;
 		public readonly int m_timeRainbowPaint = 45;
@@ -177,34 +178,40 @@ namespace CrowdControlMod
         #region Effect Variables
 
         // Parameters for the various effects
-        public readonly string[] m_killVerb =								// Collection of kill verbs used in the killplr command (one is chosen randomly each time)
+        private readonly string[] m_killVerb =								// Collection of kill verbs used in the killplr command (one is chosen randomly each time) "<player> was <kill-verb> by <viewer>"
         {
 			"murdered", "executed", "demolished", "destroyed", "spat on",
-			"slam dunked", "killed", "slapped"
+			"slam dunked", "killed", "slapped", "brutally ripped apart",
+			"ripped to shreds", "attacked with a toothbrush", "hit with cotton-candy",
+			"run over", "tormented", "subjected to a bad pun", "called stinky",
+			"cancelled", "smacked with a fish", "hugged too tightly", "poked",
+			"force-fed poison ivy", "led into a room of angry fans", "scuffed",
+			"seen crying in the corner", "invited to a kitchen party",
+			"fed [c/FF0000:ra][c/FFFF00:in][c/0000FF:bo][c/8B00FF:ws]",
+			"shot with a watergun"
 		};
-		public readonly float m_damagePlayerPerc = 0.15f;					// Set player health to this percentage of the max life
-		public readonly float m_damagePlayerPercPM = 0.02f;					// +- percentage (range) added to damagePlayerPerc
+		private readonly float m_damagePlayerPerc = 0.15f;                  // Set player health to this percentage of the max life
+		private readonly float m_damagePlayerPercPM = 0.02f;				// +- percentage (range) added to damagePlayerPerc
 		public readonly float m_fastPlrMaxSurfSpeed = 15f;					// Max movement speed on surface
 		public readonly float m_fastPlrSurfAccel = 2f;						// Movement acceleration on surface
 		public readonly float m_fastPlrMaxCaveSpeed = 9f;					// Max movement speed underground
 		public readonly float m_fastPlrCaveAccel = 1f;						// Movement acceleration underground
-		public readonly int m_jumpPlrHeight = 22;							// Player jump height
-		public readonly float m_jumpPlrSpeed = 16f;                         // Player jump speed
+		public readonly float m_jumpPlrBoost = 9f;			                // Player jump speed
 		public readonly float m_slipPlrAccel = 0.4f;						// Player run acceleration when slippery (percentage of current accel)
-		private readonly int m_potionStack = 2;								// Number of potions to provide the player
-		public readonly int[] m_preMelee =									// Prefix IDs used for melee weapons
+		private readonly int m_potionStack = 2;                             // Number of potions to provide the player
+		private readonly int[] m_preMelee =									// Prefix IDs used for melee weapons
 		{
 			1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,81
 		};
-		public readonly int[] m_preRange =									// Prefix IDs used for ranged weapons
+		private readonly int[] m_preRange =									// Prefix IDs used for ranged weapons
 		{
 			16,17,18,19,20,21,22,23,24,25,58,82
 		};
-		public readonly int[] m_preMage =									// Prefix IDs used for magic weapons
+		private readonly int[] m_preMage =									// Prefix IDs used for magic weapons
 		{
 			26,27,28,29,30,31,32,33,34,35,52,83
 		};
-		public readonly int[] m_preUni =									// Prefix IDs used for universal weapons (can be applied to any weapon)
+		private readonly int[] m_preUni =									// Prefix IDs used for universal weapons (can be applied to any weapon)
 		{
 			36,37,38,39,40,41,53,54,55,56,57,59,60,61
 		};
@@ -218,7 +225,7 @@ namespace CrowdControlMod
 			267,268,274,284,285,286,287,288,289,290,291,
 			292,293,295,296,297,300,301,302,303,304,317*/
 		};
-		public readonly byte[] m_rainbowPaint =								// Paint IDs that form a somewhat-rainbow (in order)
+		private readonly byte[] m_rainbowPaint =							// Paint IDs that form a somewhat-rainbow (in order)
 		{
 			13,14,15,16,17,18,19,20,21,22,23,24
 		};
@@ -231,9 +238,8 @@ namespace CrowdControlMod
 		private readonly int m_guardianSurvivalTime = 60 * 6;				// How long the player needs to survive the dungeon guardian for to "win"
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
-		public readonly float m_drunkSineIntensity = 0.05f;					// Sine intensity for drunk shader
 		public readonly float m_drunkGlitchIntensity = 24f;                 // Glitch intensity for drunk shader
-		private readonly int m_timeLovestruck = 4;							// Time to show the lovestruck particles
+		private readonly int m_timeLovestruck = 3;							// Time to show the lovestruck particles
 
         #endregion
 
@@ -251,11 +257,14 @@ namespace CrowdControlMod
         private System.Threading.Thread m_serverThread = null;				// Reference to the thread running the server loop
         private Socket m_activeSocket = null;								// Reference to the socket being used to communicate with Crowd Control
         private CCPlayer m_player = null;                                   // Reference to the ModPlayer instance affected by Crowd Control effects
+
+		// Configuration variables
 		public static bool _showEffectMessages = true;                      // Whether to show effect messages in chat
 		public static bool _shouldConnectToCC = true;                       // Whether to connect to crowd control
 		public static bool _disableTombstones = false;                      // Disable tombstones
 		public static float _respawnTimeFactor = 1f;                        // Respawn time factor
-		public static bool m_disableHairDye = false;						// Whether to disable hair dye effects
+		public static bool m_disableHairDye = false;                        // Whether to disable hair dye effects
+		public static bool m_disableMusic = true;							// Whether to disable music associated with some effects (mainly screen effects)
 
         #endregion
 
@@ -297,6 +306,13 @@ namespace CrowdControlMod
 					AutoReset = false
 				};
 				m_slipPlayerTimer.Elapsed += delegate { StopEffect("slipplr"); };
+
+				m_incCoinsTimer = new Timer
+				{
+					Interval = 1000 * m_timeIncCoins,
+					AutoReset = false
+				};
+				m_incCoinsTimer.Elapsed += delegate { StopEffect("item_money"); };
 
 				m_infiniteManaTimer = new Timer
 				{
@@ -433,6 +449,8 @@ namespace CrowdControlMod
 				StopEffect("jumpplr");
 			if (m_slipPlayerTimer.Enabled)
 				StopEffect("slipplr");
+			if (m_incCoinsTimer.Enabled)
+				StopEffect("item_money");
 			if (m_infiniteManaTimer.Enabled)
 				StopEffect("plr_mana");
 			if (m_infiniteAmmoTimer.Enabled)
@@ -647,8 +665,6 @@ namespace CrowdControlMod
 				case "fastplr":
 					if (m_fastPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_fastPlayerTimer);
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_SPEED, true);
 					m_player.SetHairDye(CCPlayer.EHairDye.SPEED);
 					ShowEffectMessage(898, viewer + " made " + m_player.player.name + " really, really fast for " + m_timeFastPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
@@ -656,8 +672,6 @@ namespace CrowdControlMod
 				case "jumpplr":
 					if (m_jumpPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_jumpPlayerTimer);
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_JUMP, true);
 					ShowEffectMessage(1164, viewer + " made it so " + m_player.player.name + " can jump very high for " + m_timeJumpPlayer + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -701,10 +715,12 @@ namespace CrowdControlMod
 					break;
 
 				case "item_money":
-					int coins = Item.buyPrice(0, 0, Main.rand.Next(50, 150), 0);
+					int coins = Item.buyPrice(0, Math.Max(Main.rand.Next(-7,2), 0), Main.rand.Next(50, 150));
 					m_player.GiveCoins(coins);
 					m_player.SetHairDye(CCPlayer.EHairDye.MONEY);
-					ShowEffectMessage(855,viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name, MSG_C_POSITIVE);
+
+					ResetTimer(m_incCoinsTimer);
+					ShowEffectMessage(855, viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name + " and increased coin drops from enemies for " + m_timeIncCoins + " seconds", MSG_C_POSITIVE);
 					break;
 
 				case "item_heal":
@@ -957,7 +973,11 @@ namespace CrowdControlMod
 					ResetTimer(m_drunkScreenTimer);
 					m_player.m_oldZoom = Main.GameZoomTarget;
 					m_player.SetHairDye(CCPlayer.EHairDye.TWILIGHT);
-					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Stinky, 60 * m_timeDrunkScreen);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Wet, 60 * m_timeDrunkScreen);
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPCs.ModGlobalNPC.SetTownNPCMayhem(true);
+					else SendData(EPacketEffect.TOWN_MAYHEM, true);
+					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " and the townsfolk feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
 					break;
 			}
 
@@ -972,21 +992,22 @@ namespace CrowdControlMod
             {
 				case "fastplr":
 					m_fastPlayerTimer.Stop();
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_SPEED, false);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "jumpplr":
 					m_jumpPlayerTimer.Stop();
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						SendData(EPacketEffect.SET_JUMP, false);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Jump height is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "slipplr":
 					m_slipPlayerTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Ground is no longer slippery", MSG_C_TIMEREND);
+					break;
+
+				case "item_money":
+					m_incCoinsTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Coin drops are back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "plr_mana":
@@ -1058,6 +1079,8 @@ namespace CrowdControlMod
 					if (Filters.Scene["Glitch"].IsActive()) Filters.Scene.Deactivate("Glitch");
 					Main.GameZoomTarget = m_player.m_oldZoom;
 					m_drunkScreenTimer.Stop();
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPCs.ModGlobalNPC.SetTownNPCMayhem(false);
+					else SendData(EPacketEffect.TOWN_MAYHEM, false);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer drunk", MSG_C_TIMEREND);
 					break;
 			}
@@ -1280,8 +1303,8 @@ namespace CrowdControlMod
         private void Effect_SpawnBunny(string viewer)
         {
 			short type;
-			int px = (int)m_player.player.position.X;
-			int py = (int)m_player.player.position.Y;
+			int px = (int)m_player.player.Center.X;
+			int py = (int)m_player.player.Center.Y;
 
             if (Main.rand.Next(0, 100) < 5)
             {
@@ -2083,7 +2106,6 @@ namespace CrowdControlMod
 		{
 			string debugText = "Server received packet type: " + packetEffect + " (";
 			int x, y;
-			bool enabled;
 			switch (packetEffect)
 			{
 				case EPacketEffect.CC_CONNECT:
@@ -2124,16 +2146,6 @@ namespace CrowdControlMod
 					WorldGen.paintTile(x, y, colour, true);
 					debugText += x + ", " + y + ", " + colour;
 					break;
-				case EPacketEffect.SET_SPEED:
-					enabled = reader.ReadBoolean();
-					Main.player[sender].GetModPlayer<CCPlayer>().m_servSpeed = enabled;
-					debugText += enabled;
-					break;
-				case EPacketEffect.SET_JUMP:
-					enabled = reader.ReadBoolean();
-					Main.player[sender].GetModPlayer<CCPlayer>().m_servJump = enabled;
-					debugText += enabled;
-					break;
 				case EPacketEffect.START_SUNDIAL:
 					Main.fastForwardTime = true;
 					NetMessage.SendData(Terraria.ID.MessageID.WorldData, -1, -1, null);
@@ -2142,6 +2154,11 @@ namespace CrowdControlMod
 					bool disableTombstones = reader.ReadBoolean();
 					Main.player[sender].GetModPlayer<CCPlayer>().m_servDisableTombstones = disableTombstones;
 					debugText += disableTombstones;
+					break;
+				case EPacketEffect.TOWN_MAYHEM:
+					bool mayhemEnabled = reader.ReadBoolean();
+					NPCs.ModGlobalNPC.SetTownNPCMayhem(mayhemEnabled);
+					debugText += mayhemEnabled;
 					break;
 			}
 

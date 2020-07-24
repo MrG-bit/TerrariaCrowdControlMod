@@ -13,6 +13,7 @@ using Terraria.DataStructures;
 using Terraria.Graphics.Effects;
 using System;
 using System.Text;
+using CrowdControlMod.NPCs;
 
 namespace CrowdControlMod
 {
@@ -61,8 +62,6 @@ namespace CrowdControlMod
         private int m_grenadeDelay = 0;
         private bool serverStartedViaControls = false;              // Whether server was started when joining a multiplayer server
         public float m_spawnRate = 1f;                              // NPC spawnrate for this player
-        public bool m_servSpeed = false;                            // Whether player movement speed is increased (server-side)
-        public bool m_servJump = false;                             // Whether player jump boost is increased (server-side)
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
@@ -127,6 +126,68 @@ namespace CrowdControlMod
         public override void UpdateVanityAccessories()
         {
             CheckImmunities();
+
+            if (CrowdControlMod._server != null)
+            {
+                // Increase coin drops
+                if (CrowdControlMod._server.m_incCoinsTimer.Enabled)
+                    player.coins = true;
+
+                // Jump boost
+                if (CrowdControlMod._server.m_jumpPlayerTimer.Enabled)
+                {
+                    player.jumpSpeedBoost = CrowdControlMod._server.m_jumpPlrBoost;
+                    player.jumpBoost = true;
+                    //player.noFallDmg = true;
+                }
+
+                // Disable ice skate accessoriy if slippery
+                if (CrowdControlMod._server.m_slipPlayerTimer.Enabled)
+                    player.iceSkate = false;
+
+                // You're confused and think that the Guide is an enemy
+                if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
+                {
+                    player.killClothier = true;
+                    player.killGuide = true;
+                }
+
+                // Extra damage when infinite ammo is activated
+                if (CrowdControlMod._server.m_infiniteAmmoTimer.Enabled)
+                {
+                    player.arrowDamage += 0.1f;
+                    player.bulletDamage += 0.1f;
+                }
+
+                // Increase magic damage
+                if (CrowdControlMod._server.m_infiniteManaTimer.Enabled)
+                    player.magicDamage += 0.1f;
+
+                // Custom effect music
+                if (!CCServer.m_disableMusic && !ModGlobalNPC.ActiveBossEventOrInvasion())
+                {
+                    // Hallow music for rainbow screen
+                    if (CrowdControlMod._server.m_rainbowScreenTimer.Enabled)
+                        Main.musicBox2 = 9;
+
+                    // Mushroom music for fish wall
+                    if (CrowdControlMod._server.m_fishWallTimer.Enabled)
+                        Main.musicBox2 = 27;
+
+                    // Martian madness music when screen is corrupted
+                    if (CrowdControlMod._server.m_corruptScreenTimer.Enabled)
+                        Main.musicBox2 = 33;
+
+                    // Underground hallow music for drunk mode
+                    if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
+                        Main.musicBox2 = 11;
+
+                    // Eerie music when can't see
+                    if (HasBuff(BuffID.Obstructed))
+                        Main.musicBox2 = 1;
+                }
+            }
+
 
             base.UpdateVanityAccessories();
         }
@@ -221,7 +282,7 @@ namespace CrowdControlMod
             if (CrowdControlMod._server != null)
             {
                 // Make player run faster
-                if ((CrowdControlMod._server.m_fastPlayerTimer.Enabled && Main.myPlayer == player.whoAmI) || m_servSpeed)
+                if (CrowdControlMod._server.m_fastPlayerTimer.Enabled)
                 {
                     bool aboveSurface = (int)(player.position.Y / 16) < Main.worldSurface;
                     player.maxRunSpeed = aboveSurface ? CrowdControlMod._server.m_fastPlrMaxSurfSpeed : CrowdControlMod._server.m_fastPlrMaxCaveSpeed;
@@ -233,13 +294,6 @@ namespace CrowdControlMod
                 {
                     player.runAcceleration *= CrowdControlMod._server.m_slipPlrAccel;
                     player.runSlowdown = 0f;
-                }
-
-                // Make player jump higher
-                if ((CrowdControlMod._server.m_jumpPlayerTimer.Enabled && Main.myPlayer == player.whoAmI) || m_servJump)
-                {
-                    Player.jumpHeight = CrowdControlMod._server.m_jumpPlrHeight;
-                    Player.jumpSpeed = CrowdControlMod._server.m_jumpPlrSpeed;
                 }
             }
         }

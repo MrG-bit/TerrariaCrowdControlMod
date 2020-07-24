@@ -20,6 +20,8 @@ The mod can be configured in-game through the Mod Configuration menu. One option
 * Kill the player
 * Explode the player
 * Heal / damage the player
+* Add / remove from the player's maximum HP and Mana
+* Infinite mana / ammo
 * Increase movement speed / jump height
 * Teleport the player
 * Reforge weapons and tools
@@ -27,6 +29,7 @@ The mod can be configured in-game through the Mod Configuration menu. One option
 * Randomise projectile graphics
 * Drop the player's items
 * Give the player coins
+* Give the player a random pet
 * Spawn mobs
 * Increase enemy spawnrate
 * Buff / debuff the player

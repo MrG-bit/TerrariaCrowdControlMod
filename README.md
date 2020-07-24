@@ -37,7 +37,8 @@ The mod can be configured in-game through the Mod Configuration menu. One option
 * and more ...
 
 ## Source
-This repository contains the source for the mod. You are not allowed to use the source code to publish your own Crowd Control mod. You would be unable to add new effects because that is handled on the Crowd Control servers.
+This repository contains the source for the mod. You are not allowed to use the source code to publish your own Crowd Control mod. You would be unable to add new effects because that is handled on the Crowd Control servers.</br>
+I know the code is pretty messy in places. It's my first time working with Crowd Control and making a tModLoader mod. If I were to remake this mod again knowing what I do now, I would structure it a lot differently. That being said, I'm still happy with how it turned out. It's not the worst, that's for sure.
 
 ## Acknowledgements
 * Crowd Control devs: being very supportive and welcoming (especially Jaku!)

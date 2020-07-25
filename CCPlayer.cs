@@ -115,7 +115,7 @@ namespace CrowdControlMod
         public override void ModifyDrawInfo(ref PlayerDrawInfo drawInfo)
         {
             // Make the player invisible by drawing the player somewhere else
-            if (CrowdControlMod._server != null && CrowdControlMod._server.IsRunning && CrowdControlMod._server.m_invisTimer.Enabled)
+            if (CrowdControlMod._server != null && CrowdControlMod._server.IsRunning && Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_invisTimer.Enabled)
                 drawInfo.position = Vector2.Zero;
 
             base.ModifyDrawInfo(ref drawInfo);
@@ -295,13 +295,16 @@ namespace CrowdControlMod
         // Called when the player respawns
         public override void OnRespawn(Player player)
         {
-            // Respawn pet
-            if (m_petID >= 0)
+            if (Main.myPlayer == player.whoAmI)
             {
-                if (!player.hideMisc[0])
-                    m_petID = -1;
-                else
-                    player.AddBuff(m_petID, 1);
+                // Respawn pet
+                if (m_petID >= 0)
+                {
+                    if (!player.hideMisc[0])
+                        m_petID = -1;
+                    else
+                        player.AddBuff(m_petID, 1);
+                }
             }
 
             base.OnRespawn(player);
@@ -342,16 +345,19 @@ namespace CrowdControlMod
         // Called when the player is killed
         public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
         {
-            // Reduce respawn timer
-            if (m_reduceRespawn)
+            if (Main.myPlayer == player.whoAmI)
             {
-                player.respawnTimer = m_reducedCooldown;
-                m_reduceRespawn = false;
-            }
-            else
-                player.respawnTimer = (int)(player.respawnTimer *CCServer._respawnTimeFactor);
+                // Reduce respawn timer
+                if (m_reduceRespawn)
+                {
+                    player.respawnTimer = m_reducedCooldown;
+                    m_reduceRespawn = false;
+                }
+                else
+                    player.respawnTimer = (int)(player.respawnTimer * CCServer._respawnTimeFactor);
 
-            UpdateDeathPoint();
+                UpdateDeathPoint();
+            }
 
             base.Kill(damage, hitDirection, pvp, damageSource);
         }

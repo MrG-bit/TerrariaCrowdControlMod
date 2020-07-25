@@ -25,7 +25,7 @@ namespace CrowdControlMod
         public bool ConnectToCrowdControl;
 
         [Label("Disable Tombstones")]
-        [Tooltip("Enable this to prevent your tombstones from spawning when you die.")]
+        [Tooltip("Enable this to prevent your tombstones from spawning when you die.\nIn multiplayer, other users may still see your tombstone.")]
         [DefaultValue(false)]
         public bool DisableTombstones;
 

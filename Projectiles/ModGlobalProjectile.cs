@@ -42,6 +42,7 @@ namespace CrowdControlMod.Projectiles
                     if (player.m_servDisableTombstones)
                     {
                         projectile.active = false;
+                        NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, player.player.whoAmI, null, projectile.whoAmI);
                         TDebug.WriteDebug("Server disabled " + player.player.name + "'s tombstone", Color.Yellow);
                         return false;
                     }

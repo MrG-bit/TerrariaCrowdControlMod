@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalNPC.cs
-/// Last Updated: 2020-07-24
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Change things for every NPC in the game
 ///</summary>
@@ -74,7 +74,10 @@ namespace CrowdControlMod.NPCs
                     if (Main.netMode == Terraria.ID.NetmodeID.Server)
                         NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, i);
                     if (notFriendly)
+                    {
                         Main.npc[i].AddBuff(Terraria.ID.BuffID.Stinky, 60 * CrowdControlMod._server.m_timeDrunkScreen);
+                        Main.npc[i].AddBuff(Terraria.ID.BuffID.Slimed, 60 * CrowdControlMod._server.m_timeDrunkScreen);
+                    }
                 }
             }
             TDebug.WriteDebug("Town mayhem: " + notFriendly + ".", Color.Yellow);

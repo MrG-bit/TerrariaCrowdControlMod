@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-24
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -263,8 +263,10 @@ namespace CrowdControlMod
 		public static bool _shouldConnectToCC = true;                       // Whether to connect to crowd control
 		public static bool _disableTombstones = false;                      // Disable tombstones
 		public static float _respawnTimeFactor = 1f;                        // Respawn time factor
-		public static bool m_disableHairDye = false;                        // Whether to disable hair dye effects
-		public static bool m_disableMusic = true;							// Whether to disable music associated with some effects (mainly screen effects)
+		public static bool _disableHairDye = false;							// Whether to disable hair dye effects
+		public static bool _disableMusic = true;							// Whether to disable music associated with some effects (mainly screen effects)
+		public static bool _reduceDrunkEffect = false;						// Whether to prevent the screen from moving during the drunk effect
+		public static bool _reduceCorruptEffect = false;					// Whether to slow down the rate of colour changing during the corrupt effect
 
         #endregion
 
@@ -652,7 +654,6 @@ namespace CrowdControlMod
 					if (m_player.player.statManaMax >= 200) return EffectResult.FAILURE;
 					m_player.player.statManaMax += 20;
 					m_player.player.statMana += 20;
-					m_player.SetHairDye(CCPlayer.EHairDye.MANA);
 					ShowEffectMessage(109, viewer + " added 20 mana to " + m_player.player.name + "'s total mana", MSG_C_POSITIVE);
 					break;
 
@@ -718,7 +719,6 @@ namespace CrowdControlMod
 					int coins = Item.buyPrice(0, Math.Max(Main.rand.Next(-7,2), 0), Main.rand.Next(50, 150));
 					m_player.GiveCoins(coins);
 					m_player.SetHairDye(CCPlayer.EHairDye.MONEY);
-
 					ResetTimer(m_incCoinsTimer);
 					ShowEffectMessage(855, viewer + " donated " + Main.ValueToCoins(coins) + " to " + m_player.player.name + " and increased coin drops from enemies for " + m_timeIncCoins + " seconds", MSG_C_POSITIVE);
 					break;
@@ -901,7 +901,6 @@ namespace CrowdControlMod
 					m_player.player.AddBuff(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed, true);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed, true);
-					m_player.SetHairDye(CCPlayer.EHairDye.SPEED);
 					ShowEffectMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
@@ -958,7 +957,6 @@ namespace CrowdControlMod
 				case "cam_rainbow":
 					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_rainbowScreenTimer);
-					m_player.SetHairDye(CCPlayer.EHairDye.RAINBOW);
 					ShowEffectMessage(662, viewer + " covered the screen in rainbows for " + m_timeRainbowScreen + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -972,12 +970,13 @@ namespace CrowdControlMod
 					if (m_drunkScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_drunkScreenTimer);
 					m_player.m_oldZoom = Main.GameZoomTarget;
-					m_player.SetHairDye(CCPlayer.EHairDye.TWILIGHT);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Tipsy, 60 * m_timeDrunkScreen);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Stinky, 60 * m_timeDrunkScreen);
-					m_player.player.AddBuff(Terraria.ID.BuffID.Wet, 60 * m_timeDrunkScreen);
+					m_player.player.AddBuff(Terraria.ID.BuffID.Slimed, 60 * m_timeDrunkScreen);
+					Projectile.NewProjectile(m_player.player.Center, Main.rand.NextVector2Unit() * Main.rand.Next(2, 5), Terraria.ID.ProjectileID.Ale, 1, 1f, Main.myPlayer);
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPCs.ModGlobalNPC.SetTownNPCMayhem(true);
 					else SendData(EPacketEffect.TOWN_MAYHEM, true);
-					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " and the townsfolk feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
+					ShowEffectMessage(353, viewer + " made " + m_player.player.name + " feel very tipsy for " + m_timeDrunkScreen + " seconds", MSG_C_NEGATIVE);
 					break;
 			}
 

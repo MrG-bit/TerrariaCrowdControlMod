@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalTile.cs
-/// Last Updated: 2020-07-23
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Change things for every Tile in the game
 ///</summary>
@@ -9,6 +9,7 @@ using Terraria;
 using Terraria.ModLoader;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace CrowdControlMod.Tiles
 {
@@ -29,11 +30,14 @@ namespace CrowdControlMod.Tiles
                 if (Main.drawToScreen)
                     zero = Vector2.Zero;
 
+
                 Color c;
                 if (CrowdControlMod._server.m_rainbowScreenTimer.Enabled)
                     c = Main.hslToRgb(((Main.GlobalTime * 0.75f) + (j * 0.05f)) % 1f, 1f, 0.5f);
-                else
+                else if (!CCServer._reduceCorruptEffect)
                     c = new Color(Main.rand.NextFloat(), Main.rand.NextFloat(), Main.rand.NextFloat(), Main.rand.NextFloat());
+                else
+                    c = new Color(((float)Math.Sin((Main.GlobalTime * 1.6f) + i + j) + 1f) / 2f, ((float)Math.Sin((Main.GlobalTime * 1.6f) + i + j) + 1) / 2f, ((float)Math.Sin((Main.GlobalTime * 1.6f) + i + j) + 1) / 2f, 1f);
 
                 spriteBatch.Draw(
                     texture: texture,

@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-24
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -12,7 +12,6 @@ using Terraria.ID;
 using Terraria.DataStructures;
 using Terraria.Graphics.Effects;
 using System;
-using System.Text;
 using CrowdControlMod.NPCs;
 
 namespace CrowdControlMod
@@ -138,19 +137,11 @@ namespace CrowdControlMod
                 {
                     player.jumpSpeedBoost = CrowdControlMod._server.m_jumpPlrBoost;
                     player.jumpBoost = true;
-                    //player.noFallDmg = true;
                 }
 
                 // Disable ice skate accessoriy if slippery
                 if (CrowdControlMod._server.m_slipPlayerTimer.Enabled)
                     player.iceSkate = false;
-
-                // You're confused and think that the Guide is an enemy
-                if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
-                {
-                    player.killClothier = true;
-                    player.killGuide = true;
-                }
 
                 // Extra damage when infinite ammo is activated
                 if (CrowdControlMod._server.m_infiniteAmmoTimer.Enabled)
@@ -164,7 +155,7 @@ namespace CrowdControlMod
                     player.magicDamage += 0.1f;
 
                 // Custom effect music
-                if (!CCServer.m_disableMusic && !ModGlobalNPC.ActiveBossEventOrInvasion())
+                if (!CCServer._disableMusic && !ModGlobalNPC.ActiveBossEventOrInvasion())
                 {
                     // Hallow music for rainbow screen
                     if (CrowdControlMod._server.m_rainbowScreenTimer.Enabled)
@@ -204,20 +195,23 @@ namespace CrowdControlMod
                     // Drunk shader
                     if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
                     {
-                        float drunkSineIntensity = CrowdControlMod._server.m_drunkGlitchIntensity;
+                        if (!CCServer._reduceDrunkEffect)
+                        {
+                            float drunkSineIntensity = CrowdControlMod._server.m_drunkGlitchIntensity;
+                            if (!Filters.Scene["Sine"].IsActive())
+                                Filters.Scene.Activate("Sine", player.Center).GetShader().UseIntensity(drunkSineIntensity);
+                            else
+                                Filters.Scene["Sine"].GetShader().UseIntensity(drunkSineIntensity).UseTargetPosition(player.Center);
+                        }
+
                         float drunkGlitchIntensity = CrowdControlMod._server.m_drunkGlitchIntensity;
-
-                        if (!Filters.Scene["Sine"].IsActive())
-                            Filters.Scene.Activate("Sine", player.Center).GetShader().UseIntensity(drunkSineIntensity);
-                        else
-                            Filters.Scene["Sine"].GetShader().UseIntensity(drunkSineIntensity).UseTargetPosition(player.Center);
-
                         if (!Filters.Scene["Glitch"].IsActive())
                             Filters.Scene.Activate("Glitch", player.Center).GetShader().UseIntensity(drunkGlitchIntensity);
                         else
                             Filters.Scene["Glitch"].GetShader().UseIntensity(drunkGlitchIntensity).UseTargetPosition(player.Center);
 
-                        Main.GameZoomTarget = 1.2f + ((float)Math.Sin(Main.GlobalTime * 2.2f) * 0.2f);
+                        if (!CCServer._reduceDrunkEffect)
+                            Main.GameZoomTarget = 1.2f + ((float)Math.Sin(Main.GlobalTime * 2.2f) * 0.2f);
                     }
 
                     // Infinite mana
@@ -451,7 +445,7 @@ namespace CrowdControlMod
         // Set the player's hair dye
         public void SetHairDye(EHairDye hairDye)
         {
-            if (CCServer.m_disableHairDye) return;
+            if (CCServer._disableHairDye) return;
 
             Item item = new Item();
             item.SetDefaults((int)hairDye);

@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-07-24
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
@@ -47,6 +47,16 @@ namespace CrowdControlMod
         [DefaultValue(true)]
         public bool DisableEffectMusic;
 
+        [Label("Reduce Drunk Effect")]
+        [Tooltip("Enable this to prevent the screen from being moved during the drunk-mode effect.")]
+        [DefaultValue(false)]
+        public bool ReduceDrunkEffect;
+
+        [Label("Reduce Corruption Effect")]
+        [Tooltip("Enable this to altar the corrupt-screen effect to be less flashy.\nThe effect will instead show a moving wave of darkness over the tiles.")]
+        [DefaultValue(false)]
+        public bool ReduceCorruptionEffect;
+
         // Called when configuration parameters are changed by the user
         public override void OnChanged()
         {
@@ -54,8 +64,10 @@ namespace CrowdControlMod
             CCServer._shouldConnectToCC = ConnectToCrowdControl;
             CCServer._disableTombstones = DisableTombstones;
             CCServer._respawnTimeFactor = RespawnTime;
-            CCServer.m_disableHairDye = !UseHairDyes;
-            CCServer.m_disableMusic = DisableEffectMusic;
+            CCServer._disableHairDye = !UseHairDyes;
+            CCServer._disableMusic = DisableEffectMusic;
+            CCServer._reduceDrunkEffect = ReduceDrunkEffect;
+            CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
 
             if (CrowdControlMod._server != null)
                 CrowdControlMod._server.SendConfigToServer();

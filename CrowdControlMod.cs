@@ -1,6 +1,6 @@
 ///<summary>
 /// File: CrowdControlMod.cs
-/// Last Updated: 2020-07-24
+/// Last Updated: 2020-07-25
 /// Author: MRG-bit
 /// Description: Main mod file
 ///</summary>
@@ -19,10 +19,10 @@ namespace CrowdControlMod
 {
 	public class CrowdControlMod : Mod
 	{
-		public static CrowdControlMod _mod = null;				// Reference to the mod
-		public static CCServer _server = null;					// Reference to the server
+		public static CrowdControlMod _mod = null;						// Reference to the mod
+		public static CCServer _server = null;							// Reference to the server
 
-        public override uint ExtraPlayerBuffSlots => 27;        // Extra buff slots that the player can use (22 + ExtraPlayerBuffSlots = Player.MaxBuffs)
+        public override uint ExtraPlayerBuffSlots => 27;				// Extra buff slots that the player can use (22 + ExtraPlayerBuffSlots = Player.MaxBuffs)
 
 		// Called when the mod is loaded
 		public override void Load()
@@ -92,6 +92,12 @@ namespace CrowdControlMod
 				_server.CheckDungeonGuardians();
 
 			base.MidUpdateTimeWorld();
+        }
+
+		// Called after everything is updated
+        public override void PostUpdateEverything()
+        {
+            base.PostUpdateEverything();
         }
 
         // Called after game is rendered

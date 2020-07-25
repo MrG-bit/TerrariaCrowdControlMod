@@ -43,8 +43,8 @@ namespace CrowdControlMod
         public bool UseHairDyes;
 
         [Label("Disable Effect Music")]
-        [Tooltip("Disable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
-        [DefaultValue(true)]
+        [Tooltip("Enable this to stop some effects from play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
+        [DefaultValue(false)]
         public bool DisableEffectMusic;
 
         [Label("Reduce Drunk Effect")]

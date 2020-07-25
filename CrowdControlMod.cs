@@ -66,8 +66,8 @@ namespace CrowdControlMod
 			Main.OnPostDraw -= OnPostDraw;
 		}
 
-		// Called when the user quits the world
-		public override void PreSaveAndQuit()
+        // Called when the user quits the world
+        public override void PreSaveAndQuit()
 		{
 			// Stop the server when the user exits the world
 			_server.Stop();

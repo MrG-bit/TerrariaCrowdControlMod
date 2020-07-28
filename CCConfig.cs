@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-07-25
+/// Last Updated: 2020-07-28
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
@@ -43,8 +43,8 @@ namespace CrowdControlMod
         public bool UseHairDyes;
 
         [Label("Disable Effect Music")]
-        [Tooltip("Enable this to stop some effects from play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
-        [DefaultValue(false)]
+        [Tooltip("Disable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
+        [DefaultValue(true)]
         public bool DisableEffectMusic;
 
         [Label("Reduce Drunk Effect")]

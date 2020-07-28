@@ -42,7 +42,7 @@ namespace CrowdControlMod
             ProjectileID.BouncyBomb,
             ProjectileID.Dynamite,
             ProjectileID.BouncyDynamite,
-        };
+        };          // List of explosives that can be spawned
         private readonly static short[] m_grenades =                // Grenades that can be shot
         {
             ProjectileID.Grenade,
@@ -50,22 +50,22 @@ namespace CrowdControlMod
             ProjectileID.BouncyGrenade,
             ProjectileID.Beenade,
             ProjectileID.PartyGirlGrenade
-        };
-        private readonly static int m_minExplosiveDelay = 60;
+        };            // List of grenades that can be spawned
+        private readonly static int m_minExplosiveDelay = 60;       // Min / max delay between bombs spawning from the player
         private readonly static int m_maxExplosiveDelay = 80;
-        private readonly static int m_minGrenadeDelay = 15;
+        private readonly static int m_minGrenadeDelay = 15;         // Min / max delay between grenades spawning from the player
         private readonly static int m_maxGrenadeDelay = 40;
-        private readonly static float m_minExplosiveSpd = 5f;
+        private readonly static float m_minExplosiveSpd = 5f;       // Min / max speed of explosives (bombs / grenades) spawned
         private readonly static float m_maxExplosiveSpd = 12f;
-        private int m_explosiveDelay = 0;
-        private int m_grenadeDelay = 0;
+        private int m_explosiveDelay = 0;                           // Delay between explosives spawning from the player
+        private int m_grenadeDelay = 0;                             // Delay between grenades spawning from the player
         private bool serverStartedViaControls = false;              // Whether server was started when joining a multiplayer server
         public float m_spawnRate = 1f;                              // NPC spawnrate for this player
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
         private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
-        public float m_oldZoom = -1f;                               // Old zoom
+        public float m_oldZoom = -1f;                               // Old zoom amount
         public bool m_servDisableTombstones = false;                // Whether to disable tombstones for this player (used by server)
         public bool m_ignoreImmuneConfusion = false;                // Whether the player is to ignore immunity to confusion whilst the debuff is active
         public bool m_ignoreImmuneFrozen = false;                   // Whether the player is to ignore immunity to frozen whilst the debuff is active

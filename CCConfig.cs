@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-07-28
+/// Last Updated: 2020-09-02
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
@@ -25,7 +25,7 @@ namespace CrowdControlMod
         public bool ConnectToCrowdControl;
 
         [Label("Disable Tombstones")]
-        [Tooltip("Enable this to prevent your tombstones from spawning when you die.\nIn multiplayer, other users may still see your tombstone.")]
+        [Tooltip("Enable this to prevent your tombstones from spawning when you die.")]
         [DefaultValue(false)]
         public bool DisableTombstones;
 
@@ -42,10 +42,10 @@ namespace CrowdControlMod
         [DefaultValue(true)]
         public bool UseHairDyes;
 
-        [Label("Disable Effect Music")]
-        [Tooltip("Disable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
+        [Label("Enable Effect Music")]
+        [Tooltip("Disable this to stop some effects from play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
         [DefaultValue(true)]
-        public bool DisableEffectMusic;
+        public bool EnableEffectMusic;
 
         [Label("Reduce Drunk Effect")]
         [Tooltip("Enable this to prevent the screen from being moved during the drunk-mode effect.")]
@@ -65,7 +65,7 @@ namespace CrowdControlMod
             CCServer._disableTombstones = DisableTombstones;
             CCServer._respawnTimeFactor = RespawnTime;
             CCServer._disableHairDye = !UseHairDyes;
-            CCServer._disableMusic = DisableEffectMusic;
+            CCServer._disableMusic = !EnableEffectMusic;
             CCServer._reduceDrunkEffect = ReduceDrunkEffect;
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
 

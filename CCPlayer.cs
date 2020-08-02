@@ -13,6 +13,7 @@ using Terraria.DataStructures;
 using Terraria.Graphics.Effects;
 using System;
 using CrowdControlMod.NPCs;
+using Terraria.ModLoader.IO;
 
 namespace CrowdControlMod
 {
@@ -90,11 +91,25 @@ namespace CrowdControlMod
         {
             if (Main.myPlayer == player.whoAmI)
             {
-                serverStartedViaControls = false;
+                if (serverStartedViaControls)
+                    serverStartedViaControls = false;
                 CrowdControlMod._server.Stop();
             }
 
             base.PlayerDisconnect(player);
+        }
+
+        // Called when the player is saved after leaving a world in any circumstance (singleplayer or multiplayer)
+        public override void PreSavePlayer()
+        {
+            if (Main.myPlayer == player.whoAmI)
+            {
+                if (serverStartedViaControls)
+                    serverStartedViaControls = false;
+                CrowdControlMod._server.Stop();
+            }
+
+            base.PreSavePlayer();
         }
 
         // Called when setting controls

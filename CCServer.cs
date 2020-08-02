@@ -187,7 +187,7 @@ namespace CrowdControlMod
 			"cancelled", "smacked with a fish", "hugged too tightly", "poked",
 			"force-fed poison ivy", "led into a room of angry fans", "scuffed",
 			"seen crying in the corner", "invited to a kitchen party",
-			"fed [c/FF0000:ra][c/FFFF00:in][c/0000FF:bo][c/8B00FF:ws]",
+			"fed [c/FFFF00:ra][c/FF0000:in][c/0000FF:bo][c/8B00FF:ws]",
 			"shot with a watergun"
 		};
 		private readonly float m_damagePlayerPerc = 0.15f;                  // Set player health to this percentage of the max life
@@ -443,6 +443,8 @@ namespace CrowdControlMod
                 try { m_activeSocket.Shutdown(SocketShutdown.Both); }
                 finally { m_activeSocket.Close(); }
             }
+			m_activeSocket = null;
+			m_serverThread = null;
             TDebug.WriteDebug("Server stopped", Color.Yellow);
 
 			if (m_fastPlayerTimer.Enabled)
@@ -481,7 +483,8 @@ namespace CrowdControlMod
 				StopEffect("cam_drunk");
 
 			m_prevPets.Clear();
-        }
+			m_player = null;
+		}
 
         // Server loop (attempts to connect to Crowd Control)
         private void ServerLoop()

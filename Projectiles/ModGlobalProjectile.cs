@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalProjectile.cs
-/// Last Updated: 2020-07-19
+/// Last Updated: 2020-08-02
 /// Author: MRG-bit
 /// Description: Change things for every Projectile in the game
 ///</summary>
@@ -38,14 +38,18 @@ namespace CrowdControlMod.Projectiles
             {
                 if (Main.netMode == Terraria.ID.NetmodeID.Server)
                 {
-                    CCPlayer player = Main.player[projectile.whoAmI].GetModPlayer<CCPlayer>();
-                    if (player.m_servDisableTombstones)
+                    try
                     {
-                        projectile.active = false;
-                        NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, player.player.whoAmI, null, projectile.whoAmI);
-                        TDebug.WriteDebug("Server disabled " + player.player.name + "'s tombstone", Color.Yellow);
-                        return false;
+                        CCPlayer player = Main.player[projectile.owner].GetModPlayer<CCPlayer>();
+                        if (player.m_servDisableTombstones)
+                        {
+                            projectile.active = false;
+                            NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, player.player.whoAmI, null, projectile.whoAmI);
+                            TDebug.WriteDebug("Server disabled " + player.player.name + "'s tombstone", Color.Yellow);
+                            return false;
+                        }
                     }
+                    catch { }
                 }
                 else
                 {

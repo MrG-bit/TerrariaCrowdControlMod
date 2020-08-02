@@ -1,6 +1,6 @@
 ///<summary>
 /// File: CrowdControlMod.cs
-/// Last Updated: 2020-07-25
+/// Last Updated: 2020-08-02
 /// Author: MRG-bit
 /// Description: Main mod file
 ///</summary>
@@ -55,13 +55,16 @@ namespace CrowdControlMod
 			Main.OnPostDraw += OnPostDraw;
 		}
 
-		// Called when the mod is unloaded
+		// Called when the mod is unloaded (null-ify references and static references)
 		public override void Unload()
 		{
 			base.Unload();
 
 			// Stop the server when the mod is unloaded
 			_server?.Stop();
+
+			_server = null;
+			_mod = null;
 
 			Main.OnPostDraw -= OnPostDraw;
 		}

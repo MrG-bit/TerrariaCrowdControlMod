@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-09-02
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
@@ -57,6 +57,11 @@ namespace CrowdControlMod
         [DefaultValue(false)]
         public bool ReduceCorruptionEffect;
 
+        [Label("[Advanced] Show Developer Messages In Chat")]
+        [Tooltip("Enable this to show developer messages in chat.\nThis is for debugging purposes for advanced users only.")]
+        [DefaultValue(false)]
+        public bool ShowDeveloperMessages;
+
         // Called when configuration parameters are changed by the user
         public override void OnChanged()
         {
@@ -68,6 +73,7 @@ namespace CrowdControlMod
             CCServer._disableMusic = !EnableEffectMusic;
             CCServer._reduceDrunkEffect = ReduceDrunkEffect;
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
+            TDebug._debugMode = ShowDeveloperMessages;
 
             if (CrowdControlMod._server != null)
                 CrowdControlMod._server.SendConfigToServer();

@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: TDebug.cs
-/// Last Updated: 2020-07-23
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Simple static class for displaying chat messages
 ///</summary>
@@ -12,12 +12,12 @@ namespace CrowdControlMod
 {
     public static class TDebug
     {
-        public static readonly bool IN_DEBUG = false;
+        public static bool _debugMode = false;
 
         // Send a message in chat if IN_DEBUG is true
         public static void WriteDebug(string text, Color colour = default)
         {
-            if (!IN_DEBUG)
+            if (!_debugMode)
                 return;
 
             if (Main.dedServ)

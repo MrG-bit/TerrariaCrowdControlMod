@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-08-05
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -270,8 +270,9 @@ namespace CrowdControlMod
                     }
                 }
 
+                /*
                 // Manually start / stop the server if testing
-                if (TDebug.IN_DEBUG && player.selectedItem == 9 && player.justJumped)
+                if (TDebug._debugMode && player.selectedItem == 9 && player.justJumped)
                 {
                     if (CrowdControlMod._server.IsRunning)
                     {
@@ -284,6 +285,7 @@ namespace CrowdControlMod
                         CrowdControlMod._server.Start();
                     }
                 }
+                */
             }
         }
 

@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-07-25
+/// Last Updated: 2020-08-05
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -958,13 +958,13 @@ namespace CrowdControlMod
 					break;
 
 				case "cam_rainbow":
-					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
+					if (!Main.hasFocus || m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_rainbowScreenTimer);
 					ShowEffectMessage(662, viewer + " covered the screen in rainbows for " + m_timeRainbowScreen + " seconds", MSG_C_NEUTRAL);
 					break;
 
 				case "cam_corrupt":
-					if (m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
+					if (!Main.hasFocus || m_rainbowScreenTimer.Enabled || m_corruptScreenTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_corruptScreenTimer);
 					ShowEffectMessage(3617, viewer + " corrupted the screen for " + m_timeCorruptScreen + " seconds", MSG_C_NEUTRAL);
 					break;

@@ -734,6 +734,40 @@ namespace CrowdControlMod
 					ShowEffectMessage(itemID, viewer + " gave " + m_player.player.name + " " + m_potionStack + " " + Main.item[id].Name + "s", MSG_C_POSITIVE);
 					break;
 
+				case "item_pickaxe":
+					int pickType = ChoosePerProgression(
+						preEye: Choose(3509, 3503, 1, 3497, 3515, 3491, 882, 3485),
+						preSkeletron: Choose(3521, 1917, 1320),
+						preWOF: Choose(103, 798),
+						preMech: Choose(122, 776, 1188, 777, 1195),
+						preGolem: Choose(778, 1202, 1506, 1230, 990, 2176),
+						preLunar: Choose(1294, 2176, 990),
+						preMoonLord: Choose(1294, 2176),
+						postGame: Choose(2776, 2781, 2786, 3466)
+						);
+					int pickID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, pickType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, pickID, 1f);
+					ShowEffectMessage(pickType, viewer + " gave " + m_player.player.name + " a " + Main.item[pickID].Name, MSG_C_POSITIVE);
+					break;
+
+				case "item_sword":
+					int swordType = ChoosePerProgression(
+						preEye: Choose(1827, 4, 3496, 3490, 1304, 3772, 881),
+						preSkeletron: Choose(3520, 3484, 1166, 1909, 2273, 724, 46, 795),
+						preWOF: Choose(155, 3349, 65, 1123, 190, 121, 273),
+						preMech: Choose(3258, 483, 1185, 1192, 484, 3823, 1306, 426, 672, 482, 1199, 676, 723, 3013, 3211),
+						preGolem: Choose(368, 1227, 674, 1327, 3106, 671, 1226, 1826, 1928, 675, 3018),
+						preLunar: Choose(3018, 3827, 757, 2880),
+						preMoonLord: Choose(3827, 757, 2880),
+						postGame: Choose(3065, 3063)
+					);
+					int swordID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, swordType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, swordID, 1f);
+					ShowEffectMessage(swordType, viewer + " gave " + m_player.player.name + " a " + Main.item[swordID].Name, MSG_C_POSITIVE);
+					break;
+
 				case "plr_mana":
 					if (m_infiniteManaTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_infiniteManaTimer);
@@ -2187,6 +2221,8 @@ namespace CrowdControlMod
 			if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 				SendData(EPacketEffect.SEND_CONFIG, _disableTombstones);
         }
+
+		private T Choose<T>(params T[] options) { return options[Main.rand.Next(options.Length)]; }
 
 		// Set the ModPlayer instance affected by Crowd Control Effects (note that the mod should be used in Singleplayer)
 		public void SetPlayer(CCPlayer player)

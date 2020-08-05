@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-07-25
+/// Last Updated: 2020-08-05
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -60,7 +60,7 @@ namespace CrowdControlMod
         private readonly static float m_maxExplosiveSpd = 12f;
         private int m_explosiveDelay = 0;                           // Delay between explosives spawning from the player
         private int m_grenadeDelay = 0;                             // Delay between grenades spawning from the player
-        private bool serverStartedViaControls = false;              // Whether server was started when joining a multiplayer server
+        private bool threadStartedInMultiplayer = false;              // Whether server was started when joining a multiplayer server
         public float m_spawnRate = 1f;                              // NPC spawnrate for this player
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
@@ -91,36 +91,40 @@ namespace CrowdControlMod
         {
             if (Main.myPlayer == player.whoAmI)
             {
-                if (serverStartedViaControls)
-                    serverStartedViaControls = false;
+                if (threadStartedInMultiplayer)
+                    threadStartedInMultiplayer = false;
                 CrowdControlMod._server.Stop();
             }
 
             base.PlayerDisconnect(player);
         }
 
-        // Called when the player is saved after leaving a world in any circumstance (singleplayer or multiplayer)
-        public override void PreSavePlayer()
+        public override TagCompound Save()
         {
-            if (Main.myPlayer == player.whoAmI)
+            if (Main.myPlayer == player.whoAmI && (Main.netMode == NetmodeID.SinglePlayer && threadStartedInMultiplayer))
             {
-                if (serverStartedViaControls)
-                    serverStartedViaControls = false;
+                if (threadStartedInMultiplayer)
+                    threadStartedInMultiplayer = false;
                 CrowdControlMod._server.Stop();
+                TDebug.WriteDebug("Server stopped due to player save", Color.Yellow);
             }
-
-            base.PreSavePlayer();
+            else
+            {
+                TDebug.WriteDebug("Server not stopped in Save() ignored due to not exiting to menu.", Color.Yellow);
+            }
+            return base.Save();
         }
 
         // Called when setting controls
         public override void SetControls()
         {
             // Set the player and start the server to begin connecting to Crowd Control
-            if (Main.netMode == NetmodeID.MultiplayerClient && Main.myPlayer == player.whoAmI  && !serverStartedViaControls)
+            if (Main.netMode == NetmodeID.MultiplayerClient && Main.myPlayer == player.whoAmI  && !threadStartedInMultiplayer)
             {
-                serverStartedViaControls = true;
+                threadStartedInMultiplayer = true;
                 CrowdControlMod._server.SetPlayer(this);
                 CrowdControlMod._server.Start();
+                TDebug.WriteDebug("Server started through SetControls", Color.Yellow);
             }
 
             base.SetControls();

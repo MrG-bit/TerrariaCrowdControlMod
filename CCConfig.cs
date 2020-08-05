@@ -57,6 +57,11 @@ namespace CrowdControlMod
         [DefaultValue(false)]
         public bool ReduceCorruptionEffect;
 
+        [Label("Allow Time-Changing Effects During Bosses")]
+        [Tooltip("Disable this to prevent time-changing effects during boss fights, invasions or events.")]
+        [DefaultValue(true)]
+        public bool AllowTimeChangeDuringBoss;
+
         [Label("[Advanced] Show Developer Messages In Chat")]
         [Tooltip("Enable this to show developer messages in chat.\nThis is for debugging purposes for advanced users only.")]
         [DefaultValue(false)]
@@ -73,6 +78,7 @@ namespace CrowdControlMod
             CCServer._disableMusic = !EnableEffectMusic;
             CCServer._reduceDrunkEffect = ReduceDrunkEffect;
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
+            CCServer._allowTimeChangeInBoss = AllowTimeChangeDuringBoss;
             TDebug._debugMode = ShowDeveloperMessages;
 
             if (CrowdControlMod._server != null)

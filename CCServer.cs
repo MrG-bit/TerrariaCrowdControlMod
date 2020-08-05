@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-08-05
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -16,6 +16,7 @@ using Terraria.Graphics.Effects;
 using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
+using CrowdControlMod.NPCs;
 
 namespace CrowdControlMod
 {
@@ -266,7 +267,8 @@ namespace CrowdControlMod
 		public static bool _disableHairDye = false;							// Whether to disable hair dye effects
 		public static bool _disableMusic = true;							// Whether to disable music associated with some effects (mainly screen effects)
 		public static bool _reduceDrunkEffect = false;						// Whether to prevent the screen from moving during the drunk effect
-		public static bool _reduceCorruptEffect = false;					// Whether to slow down the rate of colour changing during the corrupt effect
+		public static bool _reduceCorruptEffect = false;                    // Whether to slow down the rate of colour changing during the corrupt effect
+		public static bool _allowTimeChangeInBoss = true;					// Whether to allow time-changing effects during bosses, invasions or events
 
         #endregion
 
@@ -942,6 +944,7 @@ namespace CrowdControlMod
 					break;
 
 				case "inc_time":
+					if (!_allowTimeChangeInBoss && ModGlobalNPC.ActiveBossEventOrInvasion(false, true)) return EffectResult.FAILURE;
 					if (Main.fastForwardTime) return EffectResult.RETRY;
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) Main.fastForwardTime = true;
 					else SendData(EPacketEffect.START_SUNDIAL);
@@ -950,21 +953,25 @@ namespace CrowdControlMod
                     break;
 
                 case "time_noon":
+					if (!_allowTimeChangeInBoss && ModGlobalNPC.ActiveBossEventOrInvasion(false, true)) return EffectResult.FAILURE;
 					SetTime(27000, true);
 					ShowEffectMessage(3733, viewer + " set the time to noon", MSG_C_NEUTRAL);
                     break;
 
                 case "time_midnight":
+					if (!_allowTimeChangeInBoss && ModGlobalNPC.ActiveBossEventOrInvasion(false, true)) return EffectResult.FAILURE;
 					SetTime(16200, false);
 					ShowEffectMessage(485, viewer + " set the time to midnight", MSG_C_NEUTRAL);
                     break;
 
                 case "time_sunrise":
+					if (!_allowTimeChangeInBoss && ModGlobalNPC.ActiveBossEventOrInvasion(false, true)) return EffectResult.FAILURE;
 					SetTime(0, true);
 					ShowEffectMessage(3733, viewer + " set the time to sunrise", MSG_C_NEUTRAL);
                     break;
 
                 case "time_sunset":
+					if (!_allowTimeChangeInBoss && ModGlobalNPC.ActiveBossEventOrInvasion(false, true)) return EffectResult.FAILURE;
 					SetTime(0, false);
 					ShowEffectMessage(485, viewer + " set the time to sunset", MSG_C_NEUTRAL);
                     break;

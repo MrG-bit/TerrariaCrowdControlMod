@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: ModGlobalNPC.cs
-/// Last Updated: 2020-07-25
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Change things for every NPC in the game
 ///</summary>
@@ -59,6 +59,16 @@ namespace CrowdControlMod.NPCs
         {
             if (Main.pumpkinMoon || Main.snowMoon || Main.invasionType > 0) return true;
             if (includeBloodAndEclipse && (Main.bloodMoon || Main.eclipse)) return true;
+            for (int i = 0; i < Main.maxNPCs; i++) if (Main.npc[i].active && Main.npc[i].boss) return true;
+            return false;
+        }
+
+        // Check if there is an active boss, event, or invasion
+        public static bool ActiveBossEventOrInvasion(bool includeBlood, bool includeEclipse)
+        {
+            if (Main.pumpkinMoon || Main.snowMoon || Main.invasionType > 0) return true;
+            if (includeBlood && Main.bloodMoon) return true;
+            if (includeEclipse && Main.eclipse) return true;
             for (int i = 0; i < Main.maxNPCs; i++) if (Main.npc[i].active && Main.npc[i].boss) return true;
             return false;
         }

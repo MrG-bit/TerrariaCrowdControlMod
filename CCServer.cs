@@ -128,6 +128,7 @@ namespace CrowdControlMod
 		// Timers used for some effects
 		public readonly Timer m_godPlayerTimer = null;
 		public readonly Timer m_invincPlayerTimer = null;
+		public readonly Timer m_incMiningTimer = null;
         public readonly Timer m_fastPlayerTimer = null;
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_slipPlayerTimer = null;
@@ -149,6 +150,7 @@ namespace CrowdControlMod
 		// Times for the various effects (in seconds)
 		public readonly int m_timeGodPlayer = 20;
 		public readonly int m_timeInvincPlayer = 25;
+		public readonly int m_timeIncMining = 25;
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
 		public readonly int m_timeSlipPlayer = 25;
@@ -366,6 +368,13 @@ namespace CrowdControlMod
 				};
 				m_invincPlayerTimer.Elapsed += delegate { StopEffect("invplr"); };
 
+				m_incMiningTimer = new Timer
+				{
+					Interval = 1000 * m_timeIncMining,
+					AutoReset = false
+				};
+				m_incMiningTimer.Elapsed += delegate { StopEffect("inc_mining"); };
+
 				m_fastPlayerTimer = new Timer
 				{
 					Interval = 1000 * m_timeFastPlayer,
@@ -529,6 +538,8 @@ namespace CrowdControlMod
 				StopEffect("godplr");
 			if (m_invincPlayerTimer.Enabled)
 				StopEffect("invplr");
+			if (m_incMiningTimer.Enabled)
+				StopEffect("inc_mining");
 			if (m_fastPlayerTimer.Enabled)
 				StopEffect("fastplr");
 			if (m_jumpPlayerTimer.Enabled)
@@ -736,6 +747,12 @@ namespace CrowdControlMod
 					if (m_invincPlayerTimer.Enabled || m_godPlayerTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_invincPlayerTimer);
 					ShowEffectMessage(678, viewer + " made " + m_player.player.name + " invulnerable to enemy attacks for " + m_timeInvincPlayer + " seconds", MSG_C_POSITIVE);
+					break;
+
+				case "inc_mining":
+					if (m_incMiningTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_incMiningTimer);
+					ShowEffectMessage(2176, viewer + " increased the mining speed of " + m_player.player.name + " for " + m_timeIncMining + " seconds", MSG_C_POSITIVE);
 					break;
 
 				case "plr_inclife":
@@ -1184,6 +1201,11 @@ namespace CrowdControlMod
 				case "invplr":
 					m_invincPlayerTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer invulnerable to enemies", MSG_C_TIMEREND);
+					break;
+
+				case "inc_mining":
+					m_incMiningTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "Mining speed is back to normal", MSG_C_TIMEREND);
 					break;
 
 				case "fastplr":

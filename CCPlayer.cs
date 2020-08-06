@@ -152,6 +152,16 @@ namespace CrowdControlMod
 
             if (CrowdControlMod._server != null)
             {
+                // Increase mining speed
+                if (CrowdControlMod._server.m_incMiningTimer.Enabled)
+                {
+                    player.pickSpeed = 0f;
+                    Player.tileRangeX = 10;
+                    Player.tileRangeY = 10;
+                    player.blockRange = 10;
+                    player.tileSpeed = 0f;
+                }
+
                 // Increase coin drops
                 if (CrowdControlMod._server.m_incCoinsTimer.Enabled)
                     player.coins = true;

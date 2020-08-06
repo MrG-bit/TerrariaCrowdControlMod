@@ -921,7 +921,20 @@ namespace CrowdControlMod
                     ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
 
-                case "sp_bunny":
+				case "sp_fakeguard":
+					Vector2 fakeCirclePos = Main.rand.NextVector2CircularEdge(m_spawnGuardHalfWidth, m_spawnGuardHalfHeight);
+					Point fakeSpawnPos = new Point((int)m_player.player.position.X + (int)fakeCirclePos.X, (int)m_player.player.position.Y + (int)fakeCirclePos.Y);
+					short fakeGuardianType = (short)ModContent.NPCType<FakeGuardian>();
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
+					{
+						int fakeID = NPC.NewNPC(fakeSpawnPos.X, fakeSpawnPos.Y, fakeGuardianType);
+						Main.npc[fakeID].ai[NPC.maxAI - 1] = Main.myPlayer;
+					}
+					else SendData(EPacketEffect.SPAWN_NPC, fakeGuardianType, fakeSpawnPos.X, fakeSpawnPos.Y);
+					ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
+					break;
+
+				case "sp_bunny":
                     Effect_SpawnBunny(viewer);
                     break;
 
@@ -2285,6 +2298,7 @@ namespace CrowdControlMod
 					 y = reader.ReadInt32();
 					int id = NPC.NewNPC(x, y, type);
 					if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, (int)(m_guardianSurvivalTime * (ModGlobalNPC.ActiveBossEventOrInvasion(false) ? 0.5f : 1f))));
+					if (type == ModContent.NPCType<FakeGuardian>()) Main.npc[id].ai[NPC.maxAI - 1] = sender;
 					NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, id);
 					debugText += type + ", " + x + ", " + y;
 					break;

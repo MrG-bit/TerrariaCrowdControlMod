@@ -64,7 +64,7 @@ namespace CrowdControlMod
         public bool AllowTimeChangeDuringBoss;
 
         [Label("Allow Teleporting To Other Players Anytime")]
-        [Tooltip("This allows you to teleport to other players on the map (if you're on the same team.)\nVery helpful for casual multiplayer servers.")]
+        [Tooltip("This allows you to teleport to other players on the map (if you're on the same team).\nVery helpful for casual multiplayer servers.")]
         [DefaultValue(true)]
         public bool AllowTeleportingToOtherPlayers;
 

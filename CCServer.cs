@@ -1607,12 +1607,12 @@ namespace CrowdControlMod
             else
             {
 				short[] normalBunnTypes = new short[] { Terraria.ID.NPCID.Bunny, Terraria.ID.NPCID.BunnySlimed, Terraria.ID.NPCID.BunnyXmas, Terraria.ID.NPCID.PartyBunny };
-				if (Main.rand.Next(100) < 5)
+				if (Main.rand.Next(100) < 7)
                 {
-					for (int i = 0; i < 10; i++)
+					for (int i = 0; i < 20; i++)
 					{
-						if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px, py, Main.rand.Next(normalBunnTypes));
-						else SendData(EPacketEffect.SPAWN_NPC, Main.rand.Next(normalBunnTypes), px, py);
+						if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) NPC.NewNPC(px + Main.rand.Next(-16, 16), py - Main.rand.Next(16), Main.rand.Next(normalBunnTypes));
+						else SendData(EPacketEffect.SPAWN_NPC, Main.rand.Next(normalBunnTypes), px + Main.rand.Next(-16, 16), py - Main.rand.Next(16));
 					}
 					ShowEffectMessage(2019, viewer + " spawned lots of Bunnies", MSG_C_NEUTRAL);
 				}

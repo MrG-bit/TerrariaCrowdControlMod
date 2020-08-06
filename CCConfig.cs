@@ -5,6 +5,7 @@
 /// Description: Configuration for the mod.
 ///</summary>
 
+using IL.Terraria;
 using System.ComponentModel;
 using Terraria.ModLoader.Config;
 
@@ -34,7 +35,7 @@ namespace CrowdControlMod
         [Range(0.4f, 1f)]
         [Increment(0.1f)]
         [DrawTicks]
-        [DefaultValue(1f)]
+        [DefaultValue(0.5f)]
         public float RespawnTime;
 
         [Label("Allow Effects To Set Hair Dye")]
@@ -43,8 +44,8 @@ namespace CrowdControlMod
         public bool UseHairDyes;
 
         [Label("Enable Effect Music")]
-        [Tooltip("Disable this to stop some effects from play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
-        [DefaultValue(true)]
+        [Tooltip("Enable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.\nPlayers nearby may also hear the music.")]
+        [DefaultValue(false)]
         public bool EnableEffectMusic;
 
         [Label("Reduce Drunk Effect")]
@@ -59,8 +60,13 @@ namespace CrowdControlMod
 
         [Label("Allow Time-Changing Effects During Bosses")]
         [Tooltip("Disable this to prevent time-changing effects during boss fights, invasions or events.")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool AllowTimeChangeDuringBoss;
+
+        [Label("Allow Teleporting To Other Players Anytime")]
+        [Tooltip("This allows you to teleport to other players on the map (if you're on the same team.)\nVery helpful for casual multiplayer servers.")]
+        [DefaultValue(true)]
+        public bool AllowTelportingToOtherPlayers;
 
         [Label("[Advanced] Show Developer Messages In Chat")]
         [Tooltip("Enable this to show developer messages in chat.\nThis is for debugging purposes for advanced users only.")]
@@ -79,6 +85,8 @@ namespace CrowdControlMod
             CCServer._reduceDrunkEffect = ReduceDrunkEffect;
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
             CCServer._allowTimeChangeInBoss = AllowTimeChangeDuringBoss;
+            CCServer._allowTeleportingToPlayers = AllowTelportingToOtherPlayers;
+            if (AllowTelportingToOtherPlayers && Terraria.Main.LocalPlayer != null && Terraria.Main.LocalPlayer.team == 0) Terraria.Main.LocalPlayer.team = 3;
             TDebug._debugMode = ShowDeveloperMessages;
 
             if (CrowdControlMod._server != null)

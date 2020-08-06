@@ -20,7 +20,8 @@ namespace CrowdControlMod
 	public class CrowdControlMod : Mod
 	{
 		public static CrowdControlMod _mod = null;						// Reference to the mod
-		public static CCServer _server = null;							// Reference to the server
+		public static CCServer _server = null;                          // Reference to the server
+		private bool m_mapOpened = false;
 
         public override uint ExtraPlayerBuffSlots => 27;				// Extra buff slots that the player can use (22 + ExtraPlayerBuffSlots = Player.MaxBuffs)
 
@@ -100,7 +101,47 @@ namespace CrowdControlMod
 		// Called after everything is updated
         public override void PostUpdateEverything()
         {
+			if (!Main.mapFullscreen && m_mapOpened)
+				m_mapOpened = false;
+
             base.PostUpdateEverything();
+        }
+
+		// Called whilst the full screen map is active
+        public override void PostDrawFullscreenMap(ref string mouseText)
+        {
+			// Give wormhole potion if there isn't one in the inventory
+			if (!m_mapOpened && _server != null && _server.IsRunning && Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient && CCServer._allowTeleportingToPlayers && Main.player[Main.myPlayer].team > 0 && !Main.player[Main.myPlayer].HasUnityPotion())
+            {
+				m_mapOpened = true;
+				Player player = Main.player[Main.myPlayer];
+				bool success = false;
+				for (int i = 57; i >= 0; i--)
+				{
+					if (player.inventory[i] == null || player.inventory[i].netID == 0)
+                    {
+						int id = Item.NewItem((int)player.position.X, (int)player.position.Y, player.width, player.height, Terraria.ID.ItemID.WormholePotion, 1);
+						if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+							NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1);
+						success = true;
+						TDebug.WriteDebug("Provided wormhole potion in empty slot");
+						break;
+                    }
+				}
+				if (!success)
+                {
+					int oldSelected = player.selectedItem;
+					player.selectedItem = 49;
+					player.DropSelectedItem();
+					player.selectedItem = oldSelected;
+					int id = Item.NewItem((int)player.position.X, (int)player.position.Y, player.width, player.height, Terraria.ID.ItemID.WormholePotion, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1);
+					TDebug.WriteDebug("Provided wormhole potion by force", Color.Yellow);
+				}
+            }
+
+            base.PostDrawFullscreenMap(ref mouseText);
         }
 
         // Called after game is rendered

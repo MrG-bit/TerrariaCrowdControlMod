@@ -122,6 +122,7 @@ namespace CrowdControlMod
             if (Main.netMode == NetmodeID.MultiplayerClient && Main.myPlayer == player.whoAmI  && !threadStartedInMultiplayer)
             {
                 threadStartedInMultiplayer = true;
+                if (CCServer._allowTeleportingToPlayers) player.team = 3;
                 CrowdControlMod._server.SetPlayer(this);
                 CrowdControlMod._server.Start();
                 TDebug.WriteDebug("Server started through SetControls", Color.Yellow);

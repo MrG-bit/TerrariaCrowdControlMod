@@ -268,7 +268,8 @@ namespace CrowdControlMod
 		public static bool _disableMusic = true;							// Whether to disable music associated with some effects (mainly screen effects)
 		public static bool _reduceDrunkEffect = false;						// Whether to prevent the screen from moving during the drunk effect
 		public static bool _reduceCorruptEffect = false;                    // Whether to slow down the rate of colour changing during the corrupt effect
-		public static bool _allowTimeChangeInBoss = true;					// Whether to allow time-changing effects during bosses, invasions or events
+		public static bool _allowTimeChangeInBoss = true;                   // Whether to allow time-changing effects during bosses, invasions or events
+		public static bool _allowTeleportingToPlayers = true;				// Whether to allow the player to teleport to other players in MP
 
         #endregion
 
@@ -769,6 +770,24 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, swordID, 1f);
 					ShowEffectMessage(swordType, viewer + " gave " + m_player.player.name + " a " + Main.item[swordID].Name, MSG_C_POSITIVE);
+					break;
+
+				case "item_armour":
+					//TODO: Armour
+					int armourType = ChoosePerProgression(
+						preEye: 0,
+						preSkeletron: 0,
+						preWOF: 0,
+						preMech: 0,
+						preGolem: 0,
+						preLunar: 0,
+						preMoonLord: 0,
+						postGame: 0
+					);
+					int armourID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, armourType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, armourID, 1f);
+					ShowEffectMessage(armourType, viewer + " gave " + m_player.player.name + " a " + Main.item[armourID].Name, MSG_C_POSITIVE);
 					break;
 
 				case "plr_mana":

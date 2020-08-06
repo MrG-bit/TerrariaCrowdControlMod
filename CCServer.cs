@@ -758,6 +758,15 @@ namespace CrowdControlMod
 					ShowEffectMessage(2351, viewer + " randomly teleported " + m_player.player.name, MSG_C_NEUTRAL);
                     break;
 
+				case "randtpplr":
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer || Main.ActivePlayersCount <= 1) return EffectResult.FAILURE;
+					int randPlayerID;
+					do { if (Main.ActivePlayersCount <= 1) return EffectResult.FAILURE; randPlayerID = Main.rand.Next(Main.maxNetPlayers); } while (Main.player[randPlayerID] == null || !Main.player[randPlayerID].active || randPlayerID == Main.myPlayer);
+					m_player.player.Teleport(Main.player[randPlayerID].position, 2, 0);
+					Main.PlaySound(Terraria.ID.SoundID.Item6, m_player.player.position);
+					ShowEffectMessage(2997, viewer + " teleported " + m_player.player.name + " to " + Main.player[randPlayerID].name, MSG_C_NEUTRAL);
+					break;
+
 				case "deathtp":
 					if (m_player.TeleportToDeathPoint())
 						ShowEffectMessage(1326, viewer + " sent " + m_player.player.name + " back to their last death position", MSG_C_NEUTRAL);

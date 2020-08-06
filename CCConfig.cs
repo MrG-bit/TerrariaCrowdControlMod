@@ -68,6 +68,11 @@ namespace CrowdControlMod
         [DefaultValue(true)]
         public bool AllowTelportingToOtherPlayers;
 
+        [Label("Enable Spawn Protection For Explosive Effects")]
+        [Tooltip("When enabled, explosive-related effects will be delayed when the player is too close to spawn.")]
+        [DefaultValue(true)]
+        public bool EnableSpawnProtection;
+
         [Label("[Advanced] Show Developer Messages In Chat")]
         [Tooltip("Enable this to show developer messages in chat.\nThis is for debugging purposes for advanced users only.")]
         [DefaultValue(false)]

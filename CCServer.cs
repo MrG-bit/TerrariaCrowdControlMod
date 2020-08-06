@@ -36,6 +36,7 @@ namespace CrowdControlMod
 			START_SUNDIAL,
 			SEND_CONFIG,		// bool disableTombstones
 			TOWN_MAYHEM,		// bool enabled
+			EFFECT_MESSAGE		// string type
 		}
 
 		private enum RequestType
@@ -827,6 +828,7 @@ namespace CrowdControlMod
 					if (m_shootBombTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_shootBombTimer);
                     ShowEffectMessage(166, "Shooting explosives for " + m_timeShootBomb + " seconds thanks to " + viewer, MSG_C_NEGATIVE);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient) SendData(EPacketEffect.EFFECT_MESSAGE, code);
 					break;
 
 				case "shoot_grenade":
@@ -871,6 +873,7 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_player.m_spawnRate = m_increaseSpawnRate;
 					else SendData(EPacketEffect.SET_SPAWNRATE, m_increaseSpawnRate);
                     ShowEffectMessage(148, viewer + " increased the spawnrate for " + m_timeIncSpawnrate + " seconds", MSG_C_NEUTRAL);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient) SendData(EPacketEffect.EFFECT_MESSAGE, code);
                     break;
 
 				case "buff_freeze":
@@ -2185,6 +2188,25 @@ namespace CrowdControlMod
 			{
 				case EPacketEffect.CC_CONNECT:
 					NetMessage.BroadcastChatMessage(Terraria.Localization.NetworkText.FromLiteral("[i:1525] " + Main.player[sender].name + " has connected to Crowd Control"), Color.Green, sender);
+					break;
+				case EPacketEffect.EFFECT_MESSAGE:
+					string effectCode = reader.ReadString();
+					int preItemID = 0;
+					string effectMessage = "";
+					Color effectColour = default;
+					if (effectCode == "shoot_bomb")
+                    {
+						preItemID = Terraria.ID.ItemID.Bomb;
+						effectMessage = Main.player[sender].name + " is dropping bombs";
+						effectColour = MSG_C_NEGATIVE;
+                    }
+					else if (effectCode == "inc_spawnrate")
+                    {
+						preItemID = Terraria.ID.ItemID.WaterCandle;
+						effectMessage = "Enemy spawnrates are increased around " + Main.player[sender].name;
+						effectColour = MSG_C_NEUTRAL;
+                    }
+					NetMessage.BroadcastChatMessage(Terraria.Localization.NetworkText.FromLiteral("[i:" + preItemID.ToString() + "] " + effectMessage), effectColour, sender);
 					break;
 				case EPacketEffect.SPAWN_NPC:
 					int type = reader.ReadInt16();

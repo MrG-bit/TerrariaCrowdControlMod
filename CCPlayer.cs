@@ -99,6 +99,7 @@ namespace CrowdControlMod
             base.PlayerDisconnect(player);
         }
 
+        // Called when the player is saved
         public override TagCompound Save()
         {
             if (Main.myPlayer == player.whoAmI && (Main.netMode == NetmodeID.SinglePlayer && threadStartedInMultiplayer))
@@ -122,7 +123,6 @@ namespace CrowdControlMod
             if (Main.netMode == NetmodeID.MultiplayerClient && Main.myPlayer == player.whoAmI  && !threadStartedInMultiplayer)
             {
                 threadStartedInMultiplayer = true;
-                if (CCServer._allowTeleportingToPlayers) player.team = 3;
                 CrowdControlMod._server.SetPlayer(this);
                 CrowdControlMod._server.Start();
                 TDebug.WriteDebug("Server started through SetControls", Color.Yellow);

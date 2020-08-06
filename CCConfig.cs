@@ -86,7 +86,6 @@ namespace CrowdControlMod
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
             CCServer._allowTimeChangeInBoss = AllowTimeChangeDuringBoss;
             CCServer._allowTeleportingToPlayers = AllowTelportingToOtherPlayers;
-            if (AllowTelportingToOtherPlayers && Terraria.Main.LocalPlayer != null && Terraria.Main.LocalPlayer.team == 0) Terraria.Main.LocalPlayer.team = 3;
             TDebug._debugMode = ShowDeveloperMessages;
 
             if (CrowdControlMod._server != null)

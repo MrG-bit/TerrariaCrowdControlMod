@@ -636,8 +636,9 @@ namespace CrowdControlMod
                     break;
 
                 case "damplr":
-					int life = (int)(m_player.player.statLife * (m_damagePlayerPerc + Main.rand.NextFloat(-m_damagePlayerPercPM, m_damagePlayerPercPM)));
-					m_player.player.statLife = life;
+					//int life = (int)(m_player.player.statLife * (m_damagePlayerPerc + Main.rand.NextFloat(-m_damagePlayerPercPM, m_damagePlayerPercPM)));
+					//m_player.player.statLife = life;
+					m_player.player.statLife -= (int)(m_player.player.statLifeMax2 * 0.15f);
 					ShowEffectMessage(3106, viewer + " severely damaged " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 

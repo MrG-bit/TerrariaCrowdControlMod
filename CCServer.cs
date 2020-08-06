@@ -121,11 +121,13 @@ namespace CrowdControlMod
 			END_GAME
         }
 
-        #endregion
+		#endregion
 
-        #region Timers
+		#region Timers
 
-        // Timers used for some effects
+		// Timers used for some effects
+		public readonly Timer m_godPlayerTimer = null;
+		public readonly Timer m_invincPlayerTimer = null;
         public readonly Timer m_fastPlayerTimer = null;
 		public readonly Timer m_jumpPlayerTimer = null;
 		public readonly Timer m_slipPlayerTimer = null;
@@ -145,6 +147,8 @@ namespace CrowdControlMod
 		public readonly Timer m_drunkScreenTimer = null;
 
 		// Times for the various effects (in seconds)
+		public readonly int m_timeGodPlayer = 20;
+		public readonly int m_timeInvincPlayer = 25;
 		public readonly int m_timeFastPlayer = 25;
 		public readonly int m_timeJumpPlayer = 25;
 		public readonly int m_timeSlipPlayer = 25;
@@ -348,6 +352,20 @@ namespace CrowdControlMod
 
             // Set up timers
             {
+				m_godPlayerTimer = new Timer
+				{
+					Interval = 1000 * m_timeGodPlayer,
+					AutoReset = false
+				};
+				m_godPlayerTimer.Elapsed += delegate { StopEffect("godplr"); };
+
+				m_invincPlayerTimer = new Timer
+				{
+					Interval = 1000 * m_timeInvincPlayer,
+					AutoReset = false
+				};
+				m_invincPlayerTimer.Elapsed += delegate { StopEffect("invplr"); };
+
 				m_fastPlayerTimer = new Timer
 				{
 					Interval = 1000 * m_timeFastPlayer,
@@ -507,6 +525,10 @@ namespace CrowdControlMod
 			m_serverThread = null;
             TDebug.WriteDebug("Server stopped", Color.Yellow);
 
+			if (m_godPlayerTimer.Enabled)
+				StopEffect("godplr");
+			if (m_invincPlayerTimer.Enabled)
+				StopEffect("invplr");
 			if (m_fastPlayerTimer.Enabled)
 				StopEffect("fastplr");
 			if (m_jumpPlayerTimer.Enabled)
@@ -674,6 +696,7 @@ namespace CrowdControlMod
             switch (code)
             {
                 case "killplr":
+					if (m_godPlayerTimer.Enabled) return EffectResult.RETRY;
 					m_player.m_reduceRespawn = true;
 					m_player.player.KillMe(
                         Terraria.DataStructures.PlayerDeathReason.ByCustomReason(m_player.player.name + " was " + (m_killVerb[Main.rand.Next(m_killVerb.Length)]) + " by " + viewer),
@@ -681,6 +704,7 @@ namespace CrowdControlMod
                     break;
 
 				case "explodeplr":
+					if (m_godPlayerTimer.Enabled) return EffectResult.RETRY;
 					if (_enableSpawnProtection && IsWithinSpawnProtection()) return EffectResult.RETRY;
 					m_player.m_reduceRespawn = true;
 					m_player.player.KillMe(
@@ -697,10 +721,21 @@ namespace CrowdControlMod
                     break;
 
                 case "damplr":
-					//int life = (int)(m_player.player.statLife * (m_damagePlayerPerc + Main.rand.NextFloat(-m_damagePlayerPercPM, m_damagePlayerPercPM)));
-					//m_player.player.statLife = life;
+					if (m_godPlayerTimer.Enabled) return EffectResult.RETRY;
 					m_player.player.statLife -= (int)(m_player.player.statLifeMax2 * 0.15f);
 					ShowEffectMessage(3106, viewer + " severely damaged " + m_player.player.name, MSG_C_NEGATIVE);
+					break;
+
+				case "godplr":
+					if (m_godPlayerTimer.Enabled || m_invincPlayerTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_godPlayerTimer);
+					ShowEffectMessage(678, viewer + " enabled godmode for " + m_player.player.name + " for " + m_timeGodPlayer + " seconds", MSG_C_POSITIVE);
+					break;
+
+				case "invplr":
+					if (m_invincPlayerTimer.Enabled || m_godPlayerTimer.Enabled) return EffectResult.RETRY;
+					ResetTimer(m_invincPlayerTimer);
+					ShowEffectMessage(678, viewer + " made " + m_player.player.name + " invulnerable to enemy attacks for " + m_timeInvincPlayer + " seconds", MSG_C_POSITIVE);
 					break;
 
 				case "plr_inclife":
@@ -1141,6 +1176,16 @@ namespace CrowdControlMod
         {
             switch (code)
             {
+				case "godplr":
+					m_godPlayerTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer in godmode", MSG_C_TIMEREND);
+					break;
+
+				case "invplr":
+					m_invincPlayerTimer.Stop();
+					ShowEffectMessage(MSG_ITEM_TIMEREND, "No longer invulnerable to enemies", MSG_C_TIMEREND);
+					break;
+
 				case "fastplr":
 					m_fastPlayerTimer.Stop();
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Movement speed is back to normal", MSG_C_TIMEREND);

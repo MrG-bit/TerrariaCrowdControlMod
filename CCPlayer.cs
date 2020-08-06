@@ -242,6 +242,10 @@ namespace CrowdControlMod
                     if (CrowdControlMod._server.m_infiniteManaTimer.Enabled)
                         player.statMana = player.statManaMax2;
 
+                    // Godmode
+                    if (CrowdControlMod._server.m_godPlayerTimer.Enabled || CrowdControlMod._server.m_invincPlayerTimer.Enabled)
+                        player.statLife = player.statLifeMax2;
+
                     // Rainbow-ify the tiles below the player
                     if (CrowdControlMod._server.m_rainbowPaintTimer.Enabled && player.velocity.Y == 0f)
                     {
@@ -274,23 +278,6 @@ namespace CrowdControlMod
                         }
                     }
                 }
-
-                /*
-                // Manually start / stop the server if testing
-                if (TDebug._debugMode && player.selectedItem == 9 && player.justJumped)
-                {
-                    if (CrowdControlMod._server.IsRunning)
-                    {
-                        TDebug.WriteDebug("Manually stopping server", Color.Yellow);
-                        CrowdControlMod._server.Stop();
-                    }
-                    else
-                    {
-                        TDebug.WriteDebug("Manually starting server", Color.Yellow);
-                        CrowdControlMod._server.Start();
-                    }
-                }
-                */
             }
         }
 
@@ -377,6 +364,22 @@ namespace CrowdControlMod
             if (Main.myPlayer == player.whoAmI && CrowdControlMod._server.m_infiniteAmmoTimer.Enabled)
                 return false;
             return base.ConsumeAmmo(weapon, ammo);
+        }
+
+        // Whether the player can be hit by NPCs
+        public override bool CanBeHitByNPC(NPC npc, ref int cooldownSlot)
+        {
+            if (CrowdControlMod._server != null && (CrowdControlMod._server.m_godPlayerTimer.Enabled || CrowdControlMod._server.m_invincPlayerTimer.Enabled))
+                return false;
+            return base.CanBeHitByNPC(npc, ref cooldownSlot);
+        }
+
+        // Whether the player can be hit by projectiles
+        public override bool CanBeHitByProjectile(Projectile proj)
+        {
+            if (CrowdControlMod._server != null && (CrowdControlMod._server.m_godPlayerTimer.Enabled || CrowdControlMod._server.m_invincPlayerTimer.Enabled))
+                return false;
+            return base.CanBeHitByProjectile(proj);
         }
 
         // Called when the player is killed

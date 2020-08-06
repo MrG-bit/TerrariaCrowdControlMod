@@ -66,7 +66,7 @@ namespace CrowdControlMod
         [Label("Allow Teleporting To Other Players Anytime")]
         [Tooltip("This allows you to teleport to other players on the map (if you're on the same team.)\nVery helpful for casual multiplayer servers.")]
         [DefaultValue(true)]
-        public bool AllowTelportingToOtherPlayers;
+        public bool AllowTeleportingToOtherPlayers;
 
         [Label("Enable Spawn Protection For Explosive Effects")]
         [Tooltip("When enabled, explosive-related effects will be delayed when the player is too close to spawn.")]
@@ -90,7 +90,7 @@ namespace CrowdControlMod
             CCServer._reduceDrunkEffect = ReduceDrunkEffect;
             CCServer._reduceCorruptEffect = ReduceCorruptionEffect;
             CCServer._allowTimeChangeInBoss = AllowTimeChangeDuringBoss;
-            CCServer._allowTeleportingToPlayers = AllowTelportingToOtherPlayers;
+            CCServer._allowTeleportingToPlayers = AllowTeleportingToOtherPlayers;
             TDebug._debugMode = ShowDeveloperMessages;
 
             if (CrowdControlMod._server != null)

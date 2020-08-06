@@ -247,14 +247,63 @@ namespace CrowdControlMod
         public readonly float m_increaseSpawnRate = 12f;					// Factor that the spawnrate is increased
 		public readonly float m_fishWallOffset = 0.85f;                     // Offset between fish walls (janky)
 		public readonly float m_drunkGlitchIntensity = 24f;                 // Glitch intensity for drunk shader
-		private readonly int m_timeLovestruck = 3;							// Time to show the lovestruck particles
+		private readonly int m_timeLovestruck = 3;                          // Time to show the lovestruck particles
+		private readonly int[] m_armourPreEye = new int[]
+		{
+			Terraria.ID.ItemID.MiningHelmet, Terraria.ID.ItemID.WoodHelmet, Terraria.ID.ItemID.WoodBreastplate, Terraria.ID.ItemID.WoodGreaves, Terraria.ID.ItemID.CactusHelmet, Terraria.ID.ItemID.CactusBreastplate, Terraria.ID.ItemID.CactusLeggings,
+			Terraria.ID.ItemID.CopperHelmet, Terraria.ID.ItemID.CopperChainmail, Terraria.ID.ItemID.CopperGreaves, Terraria.ID.ItemID.TinHelmet, Terraria.ID.ItemID.TinChainmail, Terraria.ID.ItemID.TinGreaves,
+			Terraria.ID.ItemID.IronHelmet, Terraria.ID.ItemID.IronChainmail, Terraria.ID.ItemID.IronGreaves, Terraria.ID.ItemID.PumpkinHelmet, Terraria.ID.ItemID.PumpkinBreastplate, Terraria.ID.ItemID.PumpkinLeggings,
+			Terraria.ID.ItemID.GladiatorHelmet, Terraria.ID.ItemID.GladiatorBreastplate, Terraria.ID.ItemID.GladiatorLeggings, Terraria.ID.ItemID.IronHelmet, Terraria.ID.ItemID.IronChainmail, Terraria.ID.ItemID.IronGreaves,
+			Terraria.ID.ItemID.LeadHelmet, Terraria.ID.ItemID.LeadChainmail, Terraria.ID.ItemID.LeadGreaves, Terraria.ID.ItemID.GoldHelmet, Terraria.ID.ItemID.GoldChainmail, Terraria.ID.ItemID.GoldGreaves,
+			Terraria.ID.ItemID.SilverHelmet, Terraria.ID.ItemID.SilverChainmail, Terraria.ID.ItemID.SilverGreaves, Terraria.ID.ItemID.TungstenHelmet, Terraria.ID.ItemID.TungstenChainmail, Terraria.ID.ItemID.TungstenGreaves,
+			Terraria.ID.ItemID.PlatinumHelmet, Terraria.ID.ItemID.PlatinumChainmail, Terraria.ID.ItemID.PlatinumGreaves
+		};
+		private readonly int[] m_armourPreSkeletron = new int[]
+		{
+			Terraria.ID.ItemID.BeeHeadgear, Terraria.ID.ItemID.BeeBreastplate, Terraria.ID.ItemID.BeeGreaves,
+			Terraria.ID.ItemID.JungleHat, Terraria.ID.ItemID.JungleShirt, Terraria.ID.ItemID.JunglePants, Terraria.ID.ItemID.AncientCobaltHelmet, Terraria.ID.ItemID.AncientCobaltBreastplate, Terraria.ID.ItemID.AncientCobaltLeggings,
+			Terraria.ID.ItemID.MeteorHelmet, Terraria.ID.ItemID.MeteorSuit, Terraria.ID.ItemID.MeteorLeggings
+		};
+		private readonly int[] m_armourPreWOF = new int[]
+		{
+			Terraria.ID.ItemID.NecroHelmet, Terraria.ID.ItemID.NecroBreastplate, Terraria.ID.ItemID.NecroGreaves, Terraria.ID.ItemID.ShadowHelmet, Terraria.ID.ItemID.ShadowScalemail, Terraria.ID.ItemID.ShadowGreaves,
+			Terraria.ID.ItemID.AncientShadowHelmet, Terraria.ID.ItemID.AncientShadowScalemail, Terraria.ID.ItemID.AncientShadowGreaves, Terraria.ID.ItemID.CrimsonHelmet, Terraria.ID.ItemID.CrimsonScalemail, Terraria.ID.ItemID.CrimsonGreaves,
+			Terraria.ID.ItemID.MoltenHelmet, Terraria.ID.ItemID.MoltenBreastplate, Terraria.ID.ItemID.MoltenGreaves
+		};
+		private readonly int[] m_armourPreMech = new int[]
+		{
+			Terraria.ID.ItemID.SpiderMask, Terraria.ID.ItemID.SpiderBreastplate, Terraria.ID.ItemID.SpiderGreaves, Terraria.ID.ItemID.PearlwoodHelmet, Terraria.ID.ItemID.PearlwoodBreastplate, Terraria.ID.ItemID.PearlwoodGreaves,
+			Terraria.ID.ItemID.CobaltHelmet, Terraria.ID.ItemID.CobaltBreastplate, Terraria.ID.ItemID.CobaltLeggings, Terraria.ID.ItemID.PalladiumHelmet, Terraria.ID.ItemID.PalladiumBreastplate, Terraria.ID.ItemID.PalladiumLeggings,
+			Terraria.ID.ItemID.MythrilHelmet, Terraria.ID.ItemID.MythrilChainmail, Terraria.ID.ItemID.MythrilGreaves, Terraria.ID.ItemID.OrichalcumHelmet, Terraria.ID.ItemID.OrichalcumBreastplate, Terraria.ID.ItemID.OrichalcumLeggings,
+			Terraria.ID.ItemID.AdamantiteHelmet, Terraria.ID.ItemID.AdamantiteBreastplate, Terraria.ID.ItemID.AdamantiteLeggings, Terraria.ID.ItemID.TitaniumHeadgear, Terraria.ID.ItemID.TitaniumHelmet, Terraria.ID.ItemID.TitaniumMask,
+			Terraria.ID.ItemID.TitaniumBreastplate, Terraria.ID.ItemID.TitaniumLeggings, Terraria.ID.ItemID.AdamantiteHeadgear, Terraria.ID.ItemID.AdamantiteMask
+		};
+		private readonly int[] m_armourPreGolem = new int[]
+		{
+			Terraria.ID.ItemID.FrostHelmet, Terraria.ID.ItemID.FrostBreastplate, Terraria.ID.ItemID.FrostLeggings, Terraria.ID.ItemID.ApprenticeHat, Terraria.ID.ItemID.ApprenticeRobe, Terraria.ID.ItemID.ApprenticeTrousers,
+			Terraria.ID.ItemID.HallowedHelmet, Terraria.ID.ItemID.HallowedMask, Terraria.ID.ItemID.HallowedHeadgear, Terraria.ID.ItemID.HallowedPlateMail, Terraria.ID.ItemID.HallowedGreaves,
+			Terraria.ID.ItemID.ChlorophyteHelmet, Terraria.ID.ItemID.ChlorophyteMask, Terraria.ID.ItemID.ChlorophyteHeadgear, Terraria.ID.ItemID.ChlorophytePlateMail, Terraria.ID.ItemID.ChlorophyteGreaves,
+			Terraria.ID.ItemID.TurtleHelmet, Terraria.ID.ItemID.TurtleScaleMail, Terraria.ID.ItemID.TurtleLeggings, Terraria.ID.ItemID.TikiMask, Terraria.ID.ItemID.TikiShirt, Terraria.ID.ItemID.TikiPants,
+			Terraria.ID.ItemID.SpookyHelmet, Terraria.ID.ItemID.SpookyBreastplate, Terraria.ID.ItemID.SpookyLeggings, Terraria.ID.ItemID.ShroomiteHeadgear, Terraria.ID.ItemID.ShroomiteHelmet, Terraria.ID.ItemID.ShroomiteMask,
+			Terraria.ID.ItemID.ShroomiteBreastplate, Terraria.ID.ItemID.ShroomiteLeggings
+		};
+		private readonly int[] m_armourPreCultistAndMoonLord = new int[]
+		{
+			Terraria.ID.ItemID.SpectreHood, Terraria.ID.ItemID.SpectreMask, Terraria.ID.ItemID.SpectreRobe, Terraria.ID.ItemID.SpectrePants, Terraria.ID.ItemID.BeetleHelmet, Terraria.ID.ItemID.BeetleShell, Terraria.ID.ItemID.BeetleScaleMail,
+			Terraria.ID.ItemID.BeetleLeggings
+		};
+		private readonly int[] m_armourPostGame = new int[]
+		{
+			Terraria.ID.ItemID.SolarFlareHelmet, Terraria.ID.ItemID.SolarFlareBreastplate, Terraria.ID.ItemID.SolarFlareLeggings, Terraria.ID.ItemID.VortexHelmet, Terraria.ID.ItemID.VortexBreastplate, Terraria.ID.ItemID.VortexLeggings,
+			Terraria.ID.ItemID.NebulaHelmet, Terraria.ID.ItemID.NebulaBreastplate, Terraria.ID.ItemID.NebulaLeggings, Terraria.ID.ItemID.StardustHelmet, Terraria.ID.ItemID.StardustBreastplate, Terraria.ID.ItemID.StardustLeggings
+		};
 
-        #endregion
+		#endregion
 
-        #region Server Variables
+		#region Server Variables
 
-        // Effect message colours
-        private readonly Color MSG_C_NEGATIVE;								// Colour used for negative effect chat messages
+		// Effect message colours
+		private readonly Color MSG_C_NEGATIVE;								// Colour used for negative effect chat messages
 		private readonly Color MSG_C_NEUTRAL;							    // Colour used for neutral effect chat messages
 		private readonly Color MSG_C_POSITIVE;                              // Colour used for positive effect chat messages
 		private readonly Color MSG_C_TIMEREND;								// Colour used for when a timer ends
@@ -782,16 +831,15 @@ namespace CrowdControlMod
 					break;
 
 				case "item_armour":
-					//TODO: Armour
 					int armourType = ChoosePerProgression(
-						preEye: 0,
-						preSkeletron: 0,
-						preWOF: 0,
-						preMech: 0,
-						preGolem: 0,
-						preLunar: 0,
-						preMoonLord: 0,
-						postGame: 0
+						preEye: Choose(m_armourPreEye),
+						preSkeletron: Choose(m_armourPreSkeletron),
+						preWOF: Choose(m_armourPreWOF),
+						preMech: Choose(m_armourPreMech),
+						preGolem: Choose(m_armourPreGolem),
+						preLunar: Choose(m_armourPreCultistAndMoonLord),
+						preMoonLord: Choose(m_armourPreCultistAndMoonLord),
+						postGame: Choose(m_armourPostGame)
 					);
 					int armourID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, armourType, 1);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)

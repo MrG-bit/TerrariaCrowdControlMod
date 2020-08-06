@@ -1,6 +1,6 @@
 ///<summary>
 /// File: CrowdControlMod.cs
-/// Last Updated: 2020-08-02
+/// Last Updated: 2020-08-06
 /// Author: MRG-bit
 /// Description: Main mod file
 ///</summary>
@@ -124,7 +124,7 @@ namespace CrowdControlMod
 						if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 							NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1);
 						success = true;
-						TDebug.WriteDebug("Provided wormhole potion in empty slot");
+						TDebug.WriteDebug("Provided wormhole potion in empty slot", Color.Yellow);
 						break;
                     }
 				}

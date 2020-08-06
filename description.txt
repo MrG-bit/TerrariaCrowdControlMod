@@ -1,5 +1,6 @@
 Crowd Control for Terraria
 This mod can be used in conjunction with the Crowd Control Desktop Application to allow Twitch viewers to interact with the streamer's Terraria world.
+You can either play in Singleplayer or Multiplayer.
 
 Some effects include:
 - Kill / heal / damage the player

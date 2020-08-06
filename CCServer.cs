@@ -192,8 +192,6 @@ namespace CrowdControlMod
 			"fed [c/FFFF00:ra][c/FF0000:in][c/0000FF:bo][c/8B00FF:ws]",
 			"shot with a watergun"
 		};
-		private readonly float m_damagePlayerPerc = 0.15f;                  // Set player health to this percentage of the max life
-		private readonly float m_damagePlayerPercPM = 0.02f;				// +- percentage (range) added to damagePlayerPerc
 		public readonly float m_fastPlrMaxSurfSpeed = 15f;					// Max movement speed on surface
 		public readonly float m_fastPlrSurfAccel = 2f;						// Movement acceleration on surface
 		public readonly float m_fastPlrMaxCaveSpeed = 9f;					// Max movement speed underground
@@ -918,7 +916,7 @@ namespace CrowdControlMod
                 case "sp_guard":
 					Vector2 circlePos = Main.rand.NextVector2CircularEdge(m_spawnGuardHalfWidth, m_spawnGuardHalfHeight);
 					Point spawnPos = new Point((int)m_player.player.position.X + (int)circlePos.X, (int)m_player.player.position.Y + (int)circlePos.Y);
-					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_guardians.Add(new Tuple<int, int>(NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian), m_guardianSurvivalTime));
+					if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer) m_guardians.Add(new Tuple<int, int>(NPC.NewNPC(spawnPos.X, spawnPos.Y, Terraria.ID.NPCID.DungeonGuardian), (int)(m_guardianSurvivalTime * (ModGlobalNPC.ActiveBossEventOrInvasion(false) ? 0.5f : 1f))));
 					else SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.DungeonGuardian, spawnPos.X, spawnPos.Y);
                     ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
                     break;
@@ -2286,7 +2284,7 @@ namespace CrowdControlMod
 					 x = reader.ReadInt32();
 					 y = reader.ReadInt32();
 					int id = NPC.NewNPC(x, y, type);
-					if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, m_guardianSurvivalTime));
+					if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, (int)(m_guardianSurvivalTime * (ModGlobalNPC.ActiveBossEventOrInvasion(false) ? 0.5f : 1f))));
 					NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, id);
 					debugText += type + ", " + x + ", " + y;
 					break;

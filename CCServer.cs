@@ -544,6 +544,7 @@ namespace CrowdControlMod
 
 			m_prevPets.Clear();
 			m_prevLightPets.Clear();
+			m_player?.StopBuffEffects();
 			m_player = null;
 		}
 
@@ -912,7 +913,6 @@ namespace CrowdControlMod
 					if (m_projItemTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_projItemTimer);
 					ModGlobalProjectile.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
-					//Items.ModGlobalItem.m_textureOffset = Main.rand.Next(Main.itemTexture.Length);
 					ShowEffectMessage(3311, viewer + " randomised projectile sprites for " + m_timeProjItem + " seconds", MSG_C_NEUTRAL);
 					break;
 
@@ -963,34 +963,34 @@ namespace CrowdControlMod
 				case "buff_freeze":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Frozen)) return EffectResult.RETRY;
 					m_player.player.buffImmune[Terraria.ID.BuffID.Frozen] = false;
-					m_player.player.AddBuff(Terraria.ID.BuffID.Frozen, 60 * m_timeBuffFreeze, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Frozen, 60 * m_timeBuffFreeze);
 					m_player.m_ignoreImmuneFrozen = true;
 					ShowEffectMessage(1253, viewer + " cast a chilly spell over " + m_player.player.name, MSG_C_NEGATIVE);
 					break;
 
 				case "buff_fire":
 					if (m_player.HasBuff(Terraria.ID.BuffID.OnFire)) return EffectResult.RETRY;
-					m_player.player.AddBuff(Terraria.ID.BuffID.OnFire, 60 * m_timeBuffFire, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.OnFire, 60 * m_timeBuffFire);
 					Projectile.NewProjectile(m_player.player.position, new Vector2(0f, 10f), Terraria.ID.ProjectileID.MolotovCocktail, 1, 1f, Main.myPlayer);
 					ShowEffectMessage(2590, viewer + " threw a molotov at " + m_player.player.name + "'s feet", MSG_C_NEGATIVE);
 					break;
 
 				case "buff_daze":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Dazed)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Dazed, 60 * m_timeBuffDaze, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Dazed, 60 * m_timeBuffDaze);
                     ShowEffectMessage(75, viewer + " dazed " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
                 case "buff_lev":
 					if (m_player.HasBuff(Terraria.ID.BuffID.VortexDebuff)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.VortexDebuff, 60 * m_timeBuffLev, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.VortexDebuff, 60 * m_timeBuffLev);
                     ShowEffectMessage(3456, viewer + " distorted gravity around " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
 
                 case "buff_confuse":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Confused)) return EffectResult.RETRY;
 					m_player.player.buffImmune[Terraria.ID.BuffID.Confused] = false;
-					m_player.player.AddBuff(Terraria.ID.BuffID.Confused, 60 * m_timeBuffConf, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Confused, 60 * m_timeBuffConf);
 					m_player.m_ignoreImmuneConfusion = true;
 					ShowEffectMessage(3223, viewer + " confused " + m_player.player.name, MSG_C_NEGATIVE);
                     break;
@@ -998,21 +998,22 @@ namespace CrowdControlMod
 				case "buff_invis":
 					if (m_invisTimer.Enabled) return EffectResult.RETRY;
 					ResetTimer(m_invisTimer);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Invisibility, 60 * m_timeBuffInvis);
 					ShowEffectMessage(1752, viewer + " stole " + m_player.player.name + "'s body for " + m_timeBuffInvis + " seconds O-o", MSG_C_NEGATIVE);
 					break;
 
 				case "buff_iron":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Ironskin, Terraria.ID.BuffID.Endurance)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Ironskin, 60 * m_timeBuffIron, true);
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Endurance, 60 * m_timeBuffIron, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Ironskin, 60 * m_timeBuffIron);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Endurance, 60 * m_timeBuffIron);
                     ShowEffectMessage(292, viewer + " provided " + m_player.player.name + " with survivability buffs", MSG_C_POSITIVE);
                     break;
 
                 case "buff_regen":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Regeneration, Terraria.ID.BuffID.ManaRegeneration)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Regeneration, 60 * m_timeBuffRegen, true);
-                    m_player.player.AddBuff(Terraria.ID.BuffID.SoulDrain, 60 * m_timeBuffRegen, true);
-                    m_player.player.AddBuff(Terraria.ID.BuffID.ManaRegeneration, 60 * m_timeBuffRegen, true);
+                    m_player.AddBuffEffect(Terraria.ID.BuffID.Regeneration, 60 * m_timeBuffRegen);
+                    m_player.AddBuffEffect(Terraria.ID.BuffID.SoulDrain, 60 * m_timeBuffRegen);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.ManaRegeneration, 60 * m_timeBuffRegen);
 					m_player.SetHairDye(CCPlayer.EHairDye.LIFE);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
                     ShowEffectMessage(289, viewer + " provided " + m_player.player.name + " with regeneration buffs", MSG_C_POSITIVE);
@@ -1020,33 +1021,33 @@ namespace CrowdControlMod
 
 				case "buff_light":
 					if (m_player.HasBuff(Terraria.ID.BuffID.NightOwl, Terraria.ID.BuffID.Shine)) return EffectResult.RETRY;
-					m_player.player.AddBuff(Terraria.ID.BuffID.NightOwl, 60 * m_timeBuffLight, true);
-					m_player.player.AddBuff(Terraria.ID.BuffID.Shine, 60 * m_timeBuffLight, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.NightOwl, 60 * m_timeBuffLight);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Shine, 60 * m_timeBuffLight);
 					m_player.SetHairDye(CCPlayer.EHairDye.MARTIAN);
 					ShowEffectMessage(3043, viewer + " provided " + m_player.player.name + " with light", MSG_C_POSITIVE);
 					break;
 
 				case "buff_treasure":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Spelunker, Terraria.ID.BuffID.Hunter, Terraria.ID.BuffID.Dangersense)) return EffectResult.RETRY;
-					m_player.player.AddBuff(Terraria.ID.BuffID.Spelunker, 60 * m_timeBuffTreasure, true);
-					m_player.player.AddBuff(Terraria.ID.BuffID.Hunter, 60 * m_timeBuffTreasure, true);
-					m_player.player.AddBuff(Terraria.ID.BuffID.Dangersense, 60 * m_timeBuffTreasure, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Spelunker, 60 * m_timeBuffTreasure);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Hunter, 60 * m_timeBuffTreasure);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Dangersense, 60 * m_timeBuffTreasure);
 					m_player.SetHairDye(CCPlayer.EHairDye.DEPTH);
 					ShowEffectMessage(306, viewer + " helped " + m_player.player.name + " to search for treasure", MSG_C_POSITIVE);
 					break;
 
 				case "buff_life":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Lifeforce)) return EffectResult.RETRY;
-                    m_player.player.AddBuff(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife, true);
+                    m_player.AddBuffEffect(Terraria.ID.BuffID.Lifeforce, 60 * m_timeBuffLife);
 					m_player.player.AddBuff(Terraria.ID.BuffID.Lovestruck, 60 * m_timeLovestruck);
                     ShowEffectMessage(2345, viewer + " provided lifeforce to " + m_player.player.name, MSG_C_POSITIVE);
                     break;
 
 				case "buff_move":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Swiftness, Terraria.ID.BuffID.SugarRush, Terraria.ID.BuffID.Panic)) return EffectResult.RETRY;
-					m_player.player.AddBuff(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed, true);
-					m_player.player.AddBuff(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed, true);
-					m_player.player.AddBuff(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed);
 					ShowEffectMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
@@ -1100,7 +1101,7 @@ namespace CrowdControlMod
 
 				case "cam_darken":
 					if (m_player.HasBuff(Terraria.ID.BuffID.Obstructed)) return EffectResult.RETRY;
-					m_player.player.AddBuff(Terraria.ID.BuffID.Obstructed, 60 * m_timeDarkScreen, true);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.Obstructed, 60 * m_timeDarkScreen);
 					m_player.SetHairDye(CCPlayer.EHairDye.TWILIGHT);
 					ShowEffectMessage(1311, viewer + " darkened the screen for " + m_timeDarkScreen +" seconds", MSG_C_NEGATIVE);
 					break;
@@ -1197,8 +1198,61 @@ namespace CrowdControlMod
                     ShowEffectMessage(MSG_ITEM_TIMEREND, "Spawnrate is back to normal", MSG_C_TIMEREND);
 					break;
 
+				case "buff_freeze":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Frozen);
+					break;
+
+				case "buff_fire":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.OnFire);
+					break;
+
+				case "buff_daze":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Dazed);
+					break;
+
+				case "buff_lev":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.VortexDebuff);
+					break;
+
+				case "buff_confuse":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Confused);
+					break;
+
+				case "buff_iron":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Ironskin);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Endurance);
+					break;
+
+				case "buff_regen":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Regeneration);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.ManaRegeneration);
+					break;
+
+				case "buff_light":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Shine);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.NightOwl);
+					break;
+
+				case "buff_treasure":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Spelunker);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Dangersense);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Hunter);
+
+					break;
+
+				case "buff_life":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Lifeforce);
+					break;
+
+				case "buff_move":
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Swiftness);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.SugarRush);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Panic);
+					break;
+
 				case "buff_invis":
 					m_invisTimer.Stop();
+					m_player.StopBuffEffect(Terraria.ID.BuffID.Invisibility);
 					ShowEffectMessage(MSG_ITEM_TIMEREND, "Player is no longer invisible", MSG_C_TIMEREND);
 					break;
 

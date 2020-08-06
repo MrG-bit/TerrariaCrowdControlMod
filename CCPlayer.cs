@@ -14,6 +14,8 @@ using Terraria.Graphics.Effects;
 using System;
 using CrowdControlMod.NPCs;
 using Terraria.ModLoader.IO;
+using System.Collections.Generic;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace CrowdControlMod
 {
@@ -71,6 +73,7 @@ namespace CrowdControlMod
         public bool m_servDisableTombstones = false;                // Whether to disable tombstones for this player (used by server)
         public bool m_ignoreImmuneConfusion = false;                // Whether the player is to ignore immunity to confusion whilst the debuff is active
         public bool m_ignoreImmuneFrozen = false;                   // Whether the player is to ignore immunity to frozen whilst the debuff is active
+        public Dictionary<int, BuffEffect> m_buffEffects = new Dictionary<int, BuffEffect>();
 
         // Called when the player enters a world
         public override void OnEnterWorld(Player player)
@@ -320,6 +323,8 @@ namespace CrowdControlMod
         {
             if (Main.myPlayer == player.whoAmI)
             {
+                ReapplyBuffEffects();
+
                 // Respawn pet
                 if (m_petID >= 0)
                 {
@@ -480,6 +485,56 @@ namespace CrowdControlMod
             return true;
         }
 
+        // Add a buff effect to the player
+        public void AddBuffEffect(int buffType, int buffTime)
+        {
+            if (m_buffEffects.ContainsKey(buffType))
+                m_buffEffects.Remove(buffType);
+            m_buffEffects.Add(buffType, new BuffEffect(player, buffType, buffTime));
+        }
+
+        // Reapply buff effects after death
+        public void ReapplyBuffEffects()
+        {
+            List<int> toRemove = new List<int>();
+            foreach (int buffType in m_buffEffects.Keys)
+            {
+                if (m_buffEffects[buffType].Expired())
+                {
+                    toRemove.Add(buffType);
+                    TDebug.WriteDebug("Removed expired buff: " + Lang.GetBuffName(buffType), Color.Yellow);
+                }
+                else
+                {
+                    int remainingTime = m_buffEffects[buffType].RemainingTime();
+                    player.AddBuff(buffType, remainingTime);
+                    TDebug.WriteDebug("Reapplied buff: " + Lang.GetBuffName(buffType) + " for " + (remainingTime / 60) + " seconds", Color.Yellow);
+                }
+            }
+            foreach (int buffType in toRemove)
+            {
+                m_buffEffects.Remove(buffType);
+            }
+        }
+
+        // Stop all buff effects
+        public void StopBuffEffects()
+        {
+            foreach (int buffType in m_buffEffects.Keys)
+                player.ClearBuff(buffType);
+            m_buffEffects.Clear();
+        }
+
+        // Stop a given buff effect
+        public void StopBuffEffect(int buffType)
+        {
+            if (m_buffEffects.ContainsKey(buffType))
+            {
+                m_buffEffects.Remove(buffType);
+                player.ClearBuff(buffType);
+            }
+        }
+
         // Set the player's hair dye
         public void SetHairDye(EHairDye hairDye)
         {
@@ -521,6 +576,32 @@ namespace CrowdControlMod
                 if (player.buffTime[i] >= 1 && player.buffType[i] == type)
                     return true;
             return false;
+        }
+    }
+
+    // Class to allow buffs to re-occur after player dies
+    public class BuffEffect
+    {
+        private readonly DateTime m_start = default;
+        private readonly DateTime m_end = default;
+
+        public BuffEffect(Player player, int buffType, int buffTime)
+        {
+            player.AddBuff(buffType, buffTime);
+            m_start = DateTime.Now;
+            m_end = DateTime.Now.AddSeconds(buffTime / 60);
+        }
+
+        // Get whether the buff effect has expired
+        public bool Expired()
+        {
+            return DateTime.Compare(DateTime.Now, m_end) == 1;
+        }
+
+        // Get the remaining time on the buff
+        public int RemainingTime()
+        {
+            return (int)(m_end - DateTime.Now).TotalSeconds * 60;
         }
     }
 }

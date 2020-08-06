@@ -65,6 +65,7 @@ namespace CrowdControlMod
         public bool m_reduceRespawn = false;                        // Reduce respawn cooldown when the player is killed (then set to false)
         private readonly int m_reducedCooldown = 200;               // Reduced respawn cooldown if reduceRespawn is true
         public int m_petID = -1;                                    // ID for the pet buff that should be activated when the player respawns
+        public int m_lightPetID = -1;                               // ID for the light pet buff
         private Vector2 m_deathPoint = Vector2.Zero;                // Player previous death point
         public float m_oldZoom = -1f;                               // Old zoom amount
         public bool m_servDisableTombstones = false;                // Whether to disable tombstones for this player (used by server)
@@ -326,6 +327,15 @@ namespace CrowdControlMod
                         m_petID = -1;
                     else
                         player.AddBuff(m_petID, 1);
+                }
+
+                // Respawn light pet
+                if (m_lightPetID >= 0)
+                {
+                    if (!player.hideMisc[1])
+                        m_lightPetID = -1;
+                    else
+                        player.AddBuff(m_lightPetID, 1);
                 }
             }
 

@@ -227,6 +227,12 @@ namespace CrowdControlMod
 			267,268,274,284,285,286,287,288,289,290,291,
 			292,293,295,296,297,300,301,302,303,304,317*/
 		};
+		private readonly CyclicArray<int> m_prevLightPets;
+		private readonly int[] m_lightPets =
+		{
+			Terraria.ID.BuffID.ShadowOrb, Terraria.ID.BuffID.CrimsonHeart, Terraria.ID.BuffID.MagicLantern, Terraria.ID.BuffID.FairyBlue,
+			Terraria.ID.BuffID.FairyGreen, Terraria.ID.BuffID.FairyRed, 201, Terraria.ID.BuffID.Wisp, Terraria.ID.BuffID.SuspiciousTentacle
+		};
 		private readonly byte[] m_rainbowPaint =							// Paint IDs that form a somewhat-rainbow (in order)
 		{
 			13,14,15,16,17,18,19,20,21,22,23,24
@@ -288,6 +294,7 @@ namespace CrowdControlMod
 			MSG_C_TIMEREND = Color.Green;
 
 			m_prevPets = new CyclicArray<int>(5);
+			m_prevLightPets = new CyclicArray<int>(m_lightPets.Length);
 			m_rainbowTiles = new CyclicArray<Tile>(2);
 
             // Set up timers
@@ -487,6 +494,7 @@ namespace CrowdControlMod
 				StopEffect("cam_drunk");
 
 			m_prevPets.Clear();
+			m_prevLightPets.Clear();
 			m_player = null;
 		}
 
@@ -806,6 +814,10 @@ namespace CrowdControlMod
 
 				case "item_pet":
 					Effect_GivePet(viewer);
+					break;
+
+				case "item_lightpet":
+					Effect_GiveLightPet(viewer);
 					break;
 
 				case "plr_gender":
@@ -1285,6 +1297,19 @@ namespace CrowdControlMod
 			m_player.player.AddBuff(id, 1);
 			m_player.m_petID = id;
 			ShowEffectMessage(1927, viewer + " provided " + m_player.player.name + " with a " + Lang.GetBuffName(id), MSG_C_POSITIVE);
+		}
+
+		// Give the player a random light pet
+		private void Effect_GiveLightPet(string viewer)
+        {
+			if (!m_player.player.hideMisc[1]) m_player.player.ClearBuff(m_player.player.miscEquips[1].buffType);
+			m_player.player.hideMisc[1] = true;
+			int id;
+			do { id = m_lightPets[Main.rand.Next(m_lightPets.Length)]; } while (m_prevLightPets.Contains(id));
+			m_prevLightPets.Add(id);
+			m_player.player.AddBuff(id, 1);
+			m_player.m_lightPetID = id;
+			ShowEffectMessage(1183, viewer + " provided " + m_player.player.name + " with a " + Lang.GetBuffName(id), MSG_C_POSITIVE);
 		}
 
         // Generate a structure around the player depending on their biome

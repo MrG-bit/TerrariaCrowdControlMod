@@ -1,6 +1,7 @@
 # IMPORTANT NOTE: Mod not available to public yet.
 
 # Terraria Crowd Control
+![Terraria x Crowd Control](banner.png)</br>
 A mod for Terraria that allows the use of the [Crowd Control](https://crowdcontrol.live) Twitch extension.</br>
 Crowd Control allows viewers of a Twitch stream to use Coins to cause events to happen in the streamer's game.</br>
 Bits can be exchanged for Coins, rewarding the streamer. There are also free coins for viewers at the beginning of a Crowd Control session.

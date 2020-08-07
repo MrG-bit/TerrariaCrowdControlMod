@@ -5,7 +5,7 @@ A mod for Terraria that allows the use of the [Crowd Control](https://crowdcontr
 Crowd Control allows viewers of a Twitch stream to use Coins to cause events to happen in the streamer's game.</br>
 Bits can be exchanged for Coins, rewarding the streamer. There are also free coins for viewers at the beginning of a Crowd Control session.
 
-## Video: Terraria but viewers can affect the game, with GrandPOObear, Jaku and more!
+## Video: Terraria but viewers can affect the game, with GrandPOObear, Jaku and 5 others!
 [![](http://img.youtube.com/vi/r45ptq-JeS0/0.jpg)](https://youtu.be/r45ptq-JeS0 "Terraria but viewers can affect the game, with GrandPOObear, Jaku and more!")
 
 ## Mod Installation

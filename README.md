@@ -12,7 +12,9 @@ Search for, and download, the *Crowd Control for Terraria* mod in the Mod Browse
 Alternatively, the mod can be downloaded manually from the [Releases](https://github.com/MrG-bit/TerrariaCrowdControlMod/releases/latest) tab. Place the *.tmod* file in the Mods folder located in "Documents>My Games>Terraria>ModLoader". You will then need to enable the mod in tModLoader.
 </br></br>
 The mod can be configured in-game through the Mod Configuration menu. One option worth noting is the ability to stop messages in Terraria chat from Crowd Control. This is helpful if you would like to use the Browser Source option instead through your streaming software.
-</br></br>
+</br>
+![Crowd Control for Terraria](mod.png)</br>
+</br>
 Further information on Crowd Control setup: https://forum.warp.world/t/terraria-pc/16839
 
 ## Modes

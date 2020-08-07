@@ -1,16 +1,18 @@
 ﻿///<summary>
 /// File: CCConfig.cs
-/// Last Updated: 2020-08-06
+/// Last Updated: 2020-08-07
 /// Author: MRG-bit
 /// Description: Configuration for the mod.
 ///</summary>
 
 using IL.Terraria;
 using System.ComponentModel;
+using System.Diagnostics;
 using Terraria.ModLoader.Config;
 
 namespace CrowdControlMod
 {
+    [Label("Configuration")]
     public class CCConfig : ModConfig
     {
         public override ConfigScope Mode => ConfigScope.ClientSide;
@@ -44,8 +46,8 @@ namespace CrowdControlMod
         public bool UseHairDyes;
 
         [Label("Enable Effect Music")]
-        [Tooltip("Enable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.\nPlayers nearby may also hear the music.")]
-        [DefaultValue(false)]
+        [Tooltip("Enable this to allow some effects to play fitting music whilst active.\nThis is used by most of the effects that alter the screen.")]
+        [DefaultValue(true)]
         public bool EnableEffectMusic;
 
         [Label("Reduce Drunk Effect")]
@@ -72,6 +74,14 @@ namespace CrowdControlMod
         [Tooltip("When enabled, explosive-related effects will be delayed when the player is too close to spawn.")]
         [DefaultValue(true)]
         public bool EnableSpawnProtection;
+
+        [Label("Spawn Protection Radius")]
+        [Tooltip("If spawn protection is enabled, then this is the range around the world spawn that will be protected.\nThe values are in tile units (e.g. 30 tile radius around spawn.)")]
+        [Range(10, 100)]
+        [Increment(10)]
+        [DrawTicks]
+        [DefaultValue(30)]
+        public int SpawnProtectionRadius;
 
         [Label("[Advanced] Show Developer Messages In Chat")]
         [Tooltip("Enable this to show developer messages in chat.\nThis is for debugging purposes for advanced users only.")]

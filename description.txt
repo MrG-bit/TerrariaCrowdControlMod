@@ -5,10 +5,9 @@ You can either play in Singleplayer or Multiplayer.
 Some effects include:
 - Kill / heal / damage the player
 - Increase the spawn rate / spawn mobs
+- Give weapons / armour
 - Invert the controls
 - Fast-forward time / set the time
 - Buff / debuff the player
 - Flip the screen
 - and many MORE...
-
-More information on GitHub: github.com/MrG-bit/TerrariaCrowdControlMod

@@ -16,6 +16,7 @@ using CrowdControlMod.NPCs;
 using Terraria.ModLoader.IO;
 using System.Collections.Generic;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using Newtonsoft.Json.Serialization;
 
 namespace CrowdControlMod
 {
@@ -187,30 +188,6 @@ namespace CrowdControlMod
                 // Increase magic damage
                 if (CrowdControlMod._server.m_infiniteManaTimer.Enabled)
                     player.magicDamage += 0.1f;
-
-                // Custom effect music
-                if (!CCServer._disableMusic && !ModGlobalNPC.ActiveBossEventOrInvasion())
-                {
-                    // Hallow music for rainbow screen
-                    if (CrowdControlMod._server.m_rainbowScreenTimer.Enabled)
-                        Main.musicBox2 = 9;
-
-                    // Mushroom music for fish wall
-                    if (CrowdControlMod._server.m_fishWallTimer.Enabled)
-                        Main.musicBox2 = 27;
-
-                    // Martian madness music when screen is corrupted
-                    if (CrowdControlMod._server.m_corruptScreenTimer.Enabled)
-                        Main.musicBox2 = 33;
-
-                    // Underground hallow music for drunk mode
-                    if (CrowdControlMod._server.m_drunkScreenTimer.Enabled)
-                        Main.musicBox2 = 11;
-
-                    // Eerie music when can't see
-                    if (HasBuff(BuffID.Obstructed))
-                        Main.musicBox2 = 1;
-                }
             }
 
 

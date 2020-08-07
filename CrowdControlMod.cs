@@ -1,6 +1,6 @@
 ///<summary>
 /// File: CrowdControlMod.cs
-/// Last Updated: 2020-08-06
+/// Last Updated: 2020-08-07
 /// Author: MRG-bit
 /// Description: Main mod file
 ///</summary>
@@ -19,9 +19,19 @@ namespace CrowdControlMod
 {
 	public class CrowdControlMod : Mod
 	{
+		private enum EWormHoleType
+        {
+			ALREADY_HAS,
+			IN_EMPTY_SLOT,
+			REPLACED_ITEM
+        }
+
 		public static CrowdControlMod _mod = null;						// Reference to the mod
 		public static CCServer _server = null;                          // Reference to the server
-		private bool m_mapOpened = false;
+		private bool m_mapOpened = false;								// Whether the fullscreen map was opened
+		private EWormHoleType m_wormHoleType = default;					// Whether the wormhole potion was already in the inventory, placed in an empty slot, or swapped with an existing item
+		private Item m_wormHoleOldItem = null;							// Item that is replaced by wormhole potion
+		private readonly int m_wormHoleSlot = 50;						// Slot used to store the wormhole potion (top coin slot)
 
         public override uint ExtraPlayerBuffSlots => 27;				// Extra buff slots that the player can use (22 + ExtraPlayerBuffSlots = Player.MaxBuffs)
 
@@ -66,6 +76,7 @@ namespace CrowdControlMod
 
 			_server = null;
 			_mod = null;
+			m_wormHoleOldItem = null;
 
 			Main.OnPostDraw -= OnPostDraw;
 		}
@@ -102,7 +113,23 @@ namespace CrowdControlMod
         public override void PostUpdateEverything()
         {
 			if (!Main.mapFullscreen && m_mapOpened)
+			{
 				m_mapOpened = false;
+				Player player = Main.LocalPlayer;
+
+				// Get rid of wormhole if it wasn't used
+				if (m_wormHoleType == EWormHoleType.IN_EMPTY_SLOT && player.inventory[m_wormHoleSlot].type == Terraria.ID.ItemID.WormholePotion)
+                {
+					player.inventory[m_wormHoleSlot] = new Item();
+					TDebug.WriteDebug("(Wormhole) Got rid of unused wormhole", Color.Yellow);
+                }
+				// Restore previous item
+				else if (m_wormHoleType == EWormHoleType.REPLACED_ITEM)
+                {
+					player.inventory[m_wormHoleSlot] = m_wormHoleOldItem;
+					TDebug.WriteDebug("(Wormhole) Restored old item: " + m_wormHoleOldItem.Name + "(" + m_wormHoleOldItem.stack + ")", Color.Yellow);
+                }
+			}
 
             base.PostUpdateEverything();
         }
@@ -111,37 +138,81 @@ namespace CrowdControlMod
         public override void PostDrawFullscreenMap(ref string mouseText)
         {
 			// Give wormhole potion if there isn't one in the inventory
-			if (!m_mapOpened && _server != null && _server.IsRunning && Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient && CCServer._allowTeleportingToPlayers && Main.player[Main.myPlayer].team > 0 && !Main.player[Main.myPlayer].HasUnityPotion())
+			if (!m_mapOpened && _server != null && _server.IsRunning && Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient && CCServer._allowTeleportingToPlayers && Main.player[Main.myPlayer].team > 0)
             {
 				m_mapOpened = true;
-				Player player = Main.player[Main.myPlayer];
-				bool success = false;
-				for (int i = 57; i >= 0; i--)
-				{
-					if (player.inventory[i] == null || player.inventory[i].netID == 0)
-                    {
-						int id = Item.NewItem((int)player.position.X, (int)player.position.Y, player.width, player.height, Terraria.ID.ItemID.WormholePotion, 1);
-						if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-							NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1);
-						success = true;
-						TDebug.WriteDebug("Provided wormhole potion in empty slot", Color.Yellow);
-						break;
-                    }
-				}
-				if (!success)
+
+				// Already has a wormhole potion
+				if (Main.player[Main.myPlayer].HasUnityPotion())
                 {
-					int oldSelected = player.selectedItem;
-					player.selectedItem = 49;
-					player.DropSelectedItem();
-					player.selectedItem = oldSelected;
-					int id = Item.NewItem((int)player.position.X, (int)player.position.Y, player.width, player.height, Terraria.ID.ItemID.WormholePotion, 1);
-					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
-						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, id, 1);
-					TDebug.WriteDebug("Provided wormhole potion by force", Color.Yellow);
-				}
+					m_wormHoleType = EWormHoleType.ALREADY_HAS;
+					TDebug.WriteDebug("(Wormhole) Already has a wormhole", Color.Yellow);
+                }
+				else
+                {
+					Player player = Main.LocalPlayer;
+
+					// No item in slot; place wormhole in slot
+					if (player.inventory[m_wormHoleSlot] == null || player.inventory[m_wormHoleSlot].type == Terraria.ID.ItemID.None)
+                    {
+						m_wormHoleType = EWormHoleType.IN_EMPTY_SLOT;
+						player.inventory[m_wormHoleSlot] = new Item();
+						player.inventory[m_wormHoleSlot].SetDefaults(Terraria.ID.ItemID.WormholePotion);
+						TDebug.WriteDebug("(Wormhole) No item in slot; place wormhole", Color.Yellow);
+                    }
+					// Item in slot; replace with wormhole
+					else
+                    {
+						m_wormHoleType = EWormHoleType.REPLACED_ITEM;
+						m_wormHoleOldItem = player.inventory[m_wormHoleSlot];
+						player.inventory[m_wormHoleSlot] = new Item();
+						player.inventory[m_wormHoleSlot].SetDefaults(Terraria.ID.ItemID.WormholePotion);
+						TDebug.WriteDebug("(Wormhole) Item in slot; replace with wormhole: " + m_wormHoleOldItem.Name + "(" + m_wormHoleOldItem.stack + ")", Color.Yellow);
+                    }
+                }
             }
 
             base.PostDrawFullscreenMap(ref mouseText);
+        }
+
+		// Called to determine what music to play
+        public override void UpdateMusic(ref int music, ref MusicPriority priority)
+        {
+			// Custom effect music
+			if (_server != null && !Main.gameMenu && !CCServer._disableMusic && !NPCs.ModGlobalNPC.ActiveBossEventOrInvasion())
+			{
+				int oldMusic = Convert.ToInt32(music);
+
+				// Hallow music for rainbow screen
+				if (_server.m_rainbowScreenTimer.Enabled)
+					music = Terraria.ID.MusicID.TheHallow;
+
+				// Mushroom music for fish wall
+				if (_server.m_fishWallTimer.Enabled)
+					music = Terraria.ID.MusicID.Mushrooms;
+
+				// Martian madness music when screen is corrupted
+				if (_server.m_corruptScreenTimer.Enabled)
+					music = Terraria.ID.MusicID.MartianMadness;
+
+				// Underground hallow music for drunk mode
+				if (_server.m_drunkScreenTimer.Enabled)
+					music = Terraria.ID.MusicID.UndergroundHallow;
+
+				// Eerie music when can't see
+				if (Main.LocalPlayer != null && Main.LocalPlayer.HasBuff(Terraria.ID.BuffID.Obstructed))
+					music = Terraria.ID.MusicID.Eerie;
+
+				// Ignore music boxes if the music was changed by an effect and make highest priority
+				if (oldMusic != music)
+				{
+					Main.musicBox = -1;
+					Main.musicBox2 = -1;
+					priority = MusicPriority.BossHigh;
+				}
+			}
+
+			base.UpdateMusic(ref music, ref priority);
         }
 
         // Called after game is rendered

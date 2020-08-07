@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-08-06
+/// Last Updated: 2020-08-07
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -301,7 +301,6 @@ namespace CrowdControlMod
 			Terraria.ID.ItemID.SolarFlareHelmet, Terraria.ID.ItemID.SolarFlareBreastplate, Terraria.ID.ItemID.SolarFlareLeggings, Terraria.ID.ItemID.VortexHelmet, Terraria.ID.ItemID.VortexBreastplate, Terraria.ID.ItemID.VortexLeggings,
 			Terraria.ID.ItemID.NebulaHelmet, Terraria.ID.ItemID.NebulaBreastplate, Terraria.ID.ItemID.NebulaLeggings, Terraria.ID.ItemID.StardustHelmet, Terraria.ID.ItemID.StardustBreastplate, Terraria.ID.ItemID.StardustLeggings
 		};
-		private readonly int m_spawnProtectionRange = 35;
 
 		#endregion
 
@@ -331,7 +330,8 @@ namespace CrowdControlMod
 		public static bool _reduceCorruptEffect = false;                    // Whether to slow down the rate of colour changing during the corrupt effect
 		public static bool _allowTimeChangeInBoss = true;                   // Whether to allow time-changing effects during bosses, invasions or events
 		public static bool _allowTeleportingToPlayers = true;               // Whether to allow the player to teleport to other players in MP
-		public static bool _enableSpawnProtection = true;					// Delay explosive effects if the player is too close to spawn
+		public static bool _enableSpawnProtection = true;                   // Delay explosive effects if the player is too close to spawn
+		public static int _spawnProtectionRange = 35;						// Spawn protection radius
 
         #endregion
 
@@ -2508,7 +2508,7 @@ namespace CrowdControlMod
 		// Check if the player is within the spawn protection
 		private bool IsWithinSpawnProtection()
         {
-			return Vector2.Distance(new Vector2(Main.spawnTileX, Main.spawnTileY), new Vector2(m_player.player.position.X / 16f, m_player.player.position.Y / 16f)) < m_spawnProtectionRange;
+			return Vector2.Distance(new Vector2(Main.spawnTileX, Main.spawnTileY), new Vector2(m_player.player.position.X / 16f, m_player.player.position.Y / 16f)) < _spawnProtectionRange;
         }
 
 		// Set the ModPlayer instance affected by Crowd Control Effects (note that the mod should be used in Singleplayer)

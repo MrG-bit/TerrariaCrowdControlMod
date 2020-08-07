@@ -11,3 +11,6 @@ Some effects include:
 - Buff / debuff the player
 - Flip the screen
 - and many MORE...
+
+Crowd Control setup guide: https://forum.warp.world/t/terraria-pc/16839
+Crowd Control for Terraria repo: https://github.com/MrG-bit/TerrariaCrowdControlMod#readme

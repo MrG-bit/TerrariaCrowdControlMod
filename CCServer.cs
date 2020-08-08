@@ -1015,6 +1015,10 @@ namespace CrowdControlMod
 					ShowEffectMessage(1274, viewer + " spawned a Dungeon Guardian", MSG_C_NEGATIVE);
 					break;
 
+				case "sp_kingslime":
+					Effect_SpawnKingSlime(viewer, (int)m_player.player.Center.X, (int)m_player.player.Center.X);
+					break;
+
 				case "sp_bunny":
                     Effect_SpawnBunny(viewer);
                     break;
@@ -1639,6 +1643,49 @@ namespace CrowdControlMod
 					ShowEffectMessage(2019, viewer + " spawned a Bunny", MSG_C_NEUTRAL);
 				}
             }
+        }
+
+		// Spawn a King Slime
+		private void Effect_SpawnKingSlime(string viewer, int x, int y)
+        {
+			// Spawn King Slime in singleplayer
+			if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
+			{
+				int kingID = NPC.NewNPC(x, y, Terraria.ID.NPCID.KingSlime);
+				Main.npc[kingID].lifeMax = DetermineKingSlimeHealth();
+				Main.npc[kingID].life = Main.npc[kingID].lifeMax;
+				ShowEffectMessage(Terraria.ID.ItemID.SlimeCrown, viewer + " summoned a King Slime", MSG_C_NEGATIVE);
+			}
+			// Send message to server to spawn King Slime
+			else if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+			{
+				SendData(EPacketEffect.SPAWN_NPC, Terraria.ID.NPCID.KingSlime, x, y);
+				ShowEffectMessage(Terraria.ID.ItemID.SlimeCrown, viewer + " summoned a King Slime", MSG_C_NEGATIVE);
+			}
+			// Spawn King Slime on server
+			else
+            {
+				int kingID = NPC.NewNPC(x, y, Terraria.ID.NPCID.KingSlime);
+				Main.npc[kingID].lifeMax = DetermineKingSlimeHealth();
+				Main.npc[kingID].life = Main.npc[kingID].lifeMax;
+				NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, kingID);
+				SendData(EPacketEffect.EFFECT_MESSAGE, "sp_kingslime");
+			}
+        }
+
+		// Determine the max life of king slime based on progression in the game
+		private int DetermineKingSlimeHealth()
+        {
+			return ChoosePerProgression(
+				preEye: 1000,
+				preSkeletron: 1500,
+				preWOF: 2000,
+				preMech: 2500,
+				preGolem: 3000,
+				preLunar: 3500,
+				preMoonLord: 4000,
+				postGame: 4500
+				);
         }
 
 		// Generate a living tree post WorldGen
@@ -2440,16 +2487,29 @@ namespace CrowdControlMod
 						effectMessage = "Enemy spawnrates are increased around " + Main.player[sender].name;
 						effectColour = MSG_C_NEUTRAL;
                     }
+					else if (effectCode == "sp_kingslime")
+                    {
+						preItemID = Terraria.ID.ItemID.SlimeCrown;
+						effectMessage = "King Slime has awoken at " + Main.player[sender].name + "'s position";
+						effectColour = MSG_C_NEGATIVE;
+                    }
 					NetMessage.BroadcastChatMessage(Terraria.Localization.NetworkText.FromLiteral("[i:" + preItemID.ToString() + "] " + effectMessage), effectColour, sender);
 					break;
 				case EPacketEffect.SPAWN_NPC:
 					int type = reader.ReadInt16();
 					 x = reader.ReadInt32();
 					 y = reader.ReadInt32();
-					int id = NPC.NewNPC(x, y, type);
-					if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, (int)(m_guardianSurvivalTime * (ModGlobalNPC.ActiveBossEventOrInvasion(false) ? 0.5f : 1f))));
-					if (type == ModContent.NPCType<FakeGuardian>()) Main.npc[id].ai[NPC.maxAI - 1] = sender;
-					NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, id);
+					if (type == Terraria.ID.NPCID.KingSlime)
+					{
+						Effect_SpawnKingSlime("", x, y);
+					}
+					else
+					{
+						int id = NPC.NewNPC(x, y, type);
+						if (type == Terraria.ID.NPCID.DungeonGuardian) m_guardians.Add(new Tuple<int, int>(id, (int)(m_guardianSurvivalTime * (ModGlobalNPC.ActiveBossEventOrInvasion(false) ? 0.5f : 1f))));
+						if (type == ModContent.NPCType<FakeGuardian>()) Main.npc[id].ai[NPC.maxAI - 1] = sender;
+						NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, id);
+					}
 					debugText += type + ", " + x + ", " + y;
 					break;
 				case EPacketEffect.SET_TIME:

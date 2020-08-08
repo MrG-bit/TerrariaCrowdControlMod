@@ -854,13 +854,8 @@ namespace CrowdControlMod
 					int oldDirection = m_player.player.direction;
 					for (int i = 0; i < 50; i++)
                     {
-						if (m_player.player.inventory[i] == null || m_player.player.inventory[i].type == Terraria.ID.ItemID.None)
+						if (m_player.player.inventory[i] == null || m_player.player.inventory[i].type == Terraria.ID.ItemID.None || i < 10)
 							continue;
-
-						// Chance to keep favourited items or hotbar items
-						if ((m_player.player.inventory[i].favorited || i < 10) && Main.rand.Next(100) < 50)
-							continue;
-
 						m_player.player.inventory[i].favorited = false;
 						m_player.player.selectedItem = i;
 						m_player.player.velocity.X = Main.rand.Next(2, 14);

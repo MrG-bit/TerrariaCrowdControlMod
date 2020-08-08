@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-08-07
+/// Last Updated: 2020-08-08
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -300,6 +300,14 @@ namespace CrowdControlMod
 		{
 			Terraria.ID.ItemID.SolarFlareHelmet, Terraria.ID.ItemID.SolarFlareBreastplate, Terraria.ID.ItemID.SolarFlareLeggings, Terraria.ID.ItemID.VortexHelmet, Terraria.ID.ItemID.VortexBreastplate, Terraria.ID.ItemID.VortexLeggings,
 			Terraria.ID.ItemID.NebulaHelmet, Terraria.ID.ItemID.NebulaBreastplate, Terraria.ID.ItemID.NebulaLeggings, Terraria.ID.ItemID.StardustHelmet, Terraria.ID.ItemID.StardustBreastplate, Terraria.ID.ItemID.StardustLeggings
+		};
+		private readonly int[] m_randPotionOptions = new int[]
+		{
+			Terraria.ID.ItemID.AmmoReservationPotion, Terraria.ID.ItemID.ArcheryPotion, Terraria.ID.ItemID.BattlePotion, Terraria.ID.ItemID.BuilderPotion, Terraria.ID.ItemID.CalmingPotion, 2329, Terraria.ID.ItemID.EndurancePotion,
+			Terraria.ID.ItemID.FeatherfallPotion, Terraria.ID.ItemID.FlipperPotion, Terraria.ID.ItemID.GillsPotion, Terraria.ID.ItemID.GravitationPotion, Terraria.ID.ItemID.HunterPotion, Terraria.ID.ItemID.InfernoPotion,
+			Terraria.ID.ItemID.IronskinPotion, Terraria.ID.ItemID.LifeforcePotion, Terraria.ID.ItemID.NightOwlPotion, Terraria.ID.ItemID.ObsidianSkinPotion, Terraria.ID.ItemID.RagePotion, Terraria.ID.ItemID.RegenerationPotion,
+			Terraria.ID.ItemID.ShinePotion, Terraria.ID.ItemID.SpelunkerPotion, Terraria.ID.ItemID.SummoningPotion, Terraria.ID.ItemID.SwiftnessPotion, Terraria.ID.ItemID.ThornsPotion, Terraria.ID.ItemID.TitanPotion, Terraria.ID.ItemID.WrathPotion,
+			Terraria.ID.ItemID.FlaskofCursedFlames, Terraria.ID.ItemID.FlaskofFire, Terraria.ID.ItemID.FlaskofGold, Terraria.ID.ItemID.FlaskofIchor, Terraria.ID.ItemID.FlaskofNanites, Terraria.ID.ItemID.FlaskofParty, Terraria.ID.ItemID.FlaskofPoison, Terraria.ID.ItemID.FlaskofVenom
 		};
 
 		#endregion
@@ -908,6 +916,14 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, armourID, 1f);
 					ShowEffectMessage(armourType, viewer + " gave " + m_player.player.name + " a " + Main.item[armourID].Name, MSG_C_POSITIVE);
+					break;
+
+				case "item_potion":
+					int potionType = Choose(m_randPotionOptions);
+					int potionID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, potionType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, potionID, 1f);
+					ShowEffectMessage(potionType, viewer + " gave " + m_player.player.name + " a " + Main.item[potionID].Name, MSG_C_POSITIVE);
 					break;
 
 				case "plr_mana":

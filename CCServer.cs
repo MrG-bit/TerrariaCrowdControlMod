@@ -17,6 +17,7 @@ using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
 using CrowdControlMod.NPCs;
+using System.Security.Permissions;
 
 namespace CrowdControlMod
 {
@@ -309,6 +310,7 @@ namespace CrowdControlMod
 			Terraria.ID.ItemID.ShinePotion, Terraria.ID.ItemID.SpelunkerPotion, Terraria.ID.ItemID.SummoningPotion, Terraria.ID.ItemID.SwiftnessPotion, Terraria.ID.ItemID.ThornsPotion, Terraria.ID.ItemID.TitanPotion, Terraria.ID.ItemID.WrathPotion,
 			Terraria.ID.ItemID.FlaskofCursedFlames, Terraria.ID.ItemID.FlaskofFire, Terraria.ID.ItemID.FlaskofGold, Terraria.ID.ItemID.FlaskofIchor, Terraria.ID.ItemID.FlaskofNanites, Terraria.ID.ItemID.FlaskofParty, Terraria.ID.ItemID.FlaskofPoison, Terraria.ID.ItemID.FlaskofVenom
 		};
+		private readonly int m_sandTrapSize = 4;
 
 		#endregion
 
@@ -1017,6 +1019,20 @@ namespace CrowdControlMod
 
 				case "sp_kingslime":
 					Effect_SpawnKingSlime(viewer, (int)m_player.player.Center.X, (int)m_player.player.Center.X);
+					break;
+
+				case "sandtrap":
+					Point sandCenter = new Point((int)(m_player.player.Center.X / 16), (int)(m_player.player.Center.Y / 16));
+					int sandSize = m_sandTrapSize;
+					if (m_player.player.statLifeMax2 < 200)
+						sandSize /= 2;
+					for (int x = sandCenter.X - sandSize; x < sandCenter.X + sandSize; x++)
+						for (int y = sandCenter.Y - sandSize; y < sandCenter.Y + sandSize; y++)
+							if (x > 0 && x <= Main.maxTilesX && y > 0 && y < Main.maxTilesY && !Main.tile[x, y].active())
+								WorldGen.PlaceTile(x, y, Choose(Terraria.ID.TileID.Sand, Terraria.ID.TileID.Ebonsand, Terraria.ID.TileID.Pearlsand, Terraria.ID.TileID.Crimsand, Terraria.ID.TileID.Slush, Terraria.ID.TileID.Silt));
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendTileSquare(Main.myPlayer, sandCenter.X, sandCenter.Y, sandSize * 2);
+					ShowEffectMessage(Terraria.ID.ItemID.Sandgun, viewer + " encased " + m_player.player.name + " in sand", MSG_C_NEGATIVE);
 					break;
 
 				case "sp_bunny":

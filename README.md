@@ -74,3 +74,5 @@ I know the code is pretty messy in places. It's my first time working with Crowd
 * [Crowd Control](https://crowdcontrol.live)
 * [Terraria](https://store.steampowered.com/app/105600/Terraria/)
 * [tModLoader](https://store.steampowered.com/app/1281930/tModLoader/)
+* [Terraria Forum Post](https://forums.terraria.org/index.php?threads/crowd-control-for-terraria.96804/)
+* [Crowd Control Terraria Setup Guide](https://forum.warp.world/t/terraria-pc/16839)

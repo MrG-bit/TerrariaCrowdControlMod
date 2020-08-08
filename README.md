@@ -15,7 +15,7 @@ The mod can be configured in-game through the Mod Configuration menu. One option
 </br>
 ![Crowd Control for Terraria](mod.png)</br>
 </br>
-Further information on Crowd Control setup: https://forum.warp.world/t/terraria-pc/16839
+Of course, you will also need to set up Crowd Control for your Twitch channel if you haven't already. More information about this can be found in the [Setup Guide](https://forum.warp.world/t/terraria-pc/16839). Put simply, you will need to download the C[rowd Control Desktop Application](https://crowdcontrol.live/dashboard) and install the respective [Twitch Extension](https://dashboard.twitch.tv/extensions/7nydnrue11053qmjc6g0fd6einj75p) to your channel.
 
 ## Modes
 * Singleplayer

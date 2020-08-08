@@ -848,6 +848,31 @@ namespace CrowdControlMod
                         return EffectResult.RETRY;
                     break;
 
+				case "inv_drop":
+					int oldSelected = m_player.player.selectedItem;
+					float oldXSpeed = m_player.player.velocity.X;
+					int oldDirection = m_player.player.direction;
+					for (int i = 0; i < 50; i++)
+                    {
+						if (m_player.player.inventory[i] == null || m_player.player.inventory[i].type == Terraria.ID.ItemID.None)
+							continue;
+
+						// Chance to keep favourited items or hotbar items
+						if ((m_player.player.inventory[i].favorited || i < 10) && Main.rand.Next(100) < 50)
+							continue;
+
+						m_player.player.inventory[i].favorited = false;
+						m_player.player.selectedItem = i;
+						m_player.player.velocity.X = Main.rand.Next(2, 14);
+						m_player.player.direction = Choose(-1, 1);
+						m_player.player.DropSelectedItem();
+					}
+					m_player.player.selectedItem = oldSelected;
+					m_player.player.velocity.X = oldXSpeed;
+					m_player.player.direction = oldDirection;
+					ShowEffectMessage(Terraria.ID.ItemID.SmokeBomb, viewer + " exploded " + m_player.player.name + "'s inventory", MSG_C_NEGATIVE);
+					break;
+
 				case "item_prefix":
 					if (Effect_RandomItemPrefix(viewer) == EffectResult.RETRY)
 						return EffectResult.RETRY;

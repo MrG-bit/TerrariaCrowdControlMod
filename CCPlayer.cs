@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-08-06
+/// Last Updated: 2020-08-08
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -12,11 +12,8 @@ using Terraria.ID;
 using Terraria.DataStructures;
 using Terraria.Graphics.Effects;
 using System;
-using CrowdControlMod.NPCs;
 using Terraria.ModLoader.IO;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
-using Newtonsoft.Json.Serialization;
 
 namespace CrowdControlMod
 {
@@ -53,7 +50,15 @@ namespace CrowdControlMod
             ProjectileID.StickyGrenade,
             ProjectileID.BouncyGrenade,
             ProjectileID.Beenade,
-            ProjectileID.PartyGirlGrenade
+            ProjectileID.PartyGirlGrenade,
+            ProjectileID.SmokeBomb,
+            ProjectileID.HappyBomb,
+            ProjectileID.ConfettiGun,
+            ProjectileID.FlowerPetal,
+            ProjectileID.OrnamentFriendly,
+            ProjectileID.ToxicFlask,
+            589, // Friendly santa projectiles
+            ProjectileID.DD2GoblinBomb
         };            // List of grenades that can be spawned
         private readonly static int m_minExplosiveDelay = 60;       // Min / max delay between bombs spawning from the player
         private readonly static int m_maxExplosiveDelay = 80;

@@ -18,6 +18,8 @@ using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
 using CrowdControlMod.NPCs;
 using System.Security.Permissions;
+using Mono.Cecil.Cil;
+using IL.Terraria.Localization;
 
 namespace CrowdControlMod
 {
@@ -310,7 +312,7 @@ namespace CrowdControlMod
 			Terraria.ID.ItemID.ShinePotion, Terraria.ID.ItemID.SpelunkerPotion, Terraria.ID.ItemID.SummoningPotion, Terraria.ID.ItemID.SwiftnessPotion, Terraria.ID.ItemID.ThornsPotion, Terraria.ID.ItemID.TitanPotion, Terraria.ID.ItemID.WrathPotion,
 			Terraria.ID.ItemID.FlaskofCursedFlames, Terraria.ID.ItemID.FlaskofFire, Terraria.ID.ItemID.FlaskofGold, Terraria.ID.ItemID.FlaskofIchor, Terraria.ID.ItemID.FlaskofNanites, Terraria.ID.ItemID.FlaskofParty, Terraria.ID.ItemID.FlaskofPoison, Terraria.ID.ItemID.FlaskofVenom
 		};
-		private readonly int m_sandTrapSize = 4;
+		private readonly int m_sandTrapSize = 6;
 
 		#endregion
 
@@ -612,6 +614,7 @@ namespace CrowdControlMod
 					System.Threading.Thread.Sleep(1000 * 2);
 					continue;
                 }
+				shouldNotConnectText = true;
 
                 m_activeSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 try { m_activeSocket.Connect("127.0.0.1", 58430); connected = true; }
@@ -623,7 +626,7 @@ namespace CrowdControlMod
 					TDebug.WriteMessage(1525, "Connected to Crowd Control", Color.Green);
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						SendData(EPacketEffect.CC_CONNECT);
-                    while (m_activeSocket.Connected && m_activeSocket.Poll(1000, SelectMode.SelectWrite) && ClientLoop(m_activeSocket)) ;
+                    while (m_activeSocket.Connected && m_activeSocket.Poll(1000, SelectMode.SelectWrite) && ClientLoop(m_activeSocket) && _shouldConnectToCC) ;
                     try { m_activeSocket.Shutdown(SocketShutdown.Both); }
                     finally { m_activeSocket.Close(); }
                     TDebug.WriteMessage(1526, "Disconnected from Crowd Control", Color.Green);
@@ -694,22 +697,27 @@ namespace CrowdControlMod
             }
         }
 
-        // Process an effect request
-        private EffectResult ProcessEffect(string code, string viewer, int requestType)
-        {
-            // Only process the request if the game is not paused
-            if ((Main.gamePaused || Main.player[Main.myPlayer].dead) && requestType != (int)RequestType.STOP)
-            {
-                TDebug.WriteDebug("Game is paused or player is dead. Will retry [" + code + "]", Color.Yellow);
-                return EffectResult.RETRY;
-            }
+		// Process an effect request
+		private EffectResult ProcessEffect(string code, string viewer, int requestType)
+		{
+			// Only process the request if the game is not paused
+			if ((Main.gamePaused || Main.player[Main.myPlayer].dead) && requestType != (int)RequestType.STOP)
+			{
+				TDebug.WriteDebug("Game is paused or player is dead. Will retry [" + code + "]", Color.Yellow);
+				return EffectResult.RETRY;
+			}
 
-            // Start or stop the effect
-            if (requestType != (int)RequestType.STOP)
-                return StartEffect(code, viewer);
-            else
-                return StopEffect(code);
-        }
+			// Check if viewer name is blank or not able to be displayed
+			Terraria.Localization.NetworkText text = Terraria.Localization.NetworkText.FromLiteral(viewer);
+			if (string.IsNullOrEmpty(viewer) || text == Terraria.Localization.NetworkText.Empty)
+				viewer = "A Viewer";
+
+			// Start or stop the effect
+			if (requestType != (int)RequestType.STOP)
+				return StartEffect(code, viewer);
+			else
+				return StopEffect(code);
+		}
 
         // Start an effect
         private EffectResult StartEffect(string code, string viewer)
@@ -852,13 +860,20 @@ namespace CrowdControlMod
 					int oldSelected = m_player.player.selectedItem;
 					float oldXSpeed = m_player.player.velocity.X;
 					int oldDirection = m_player.player.direction;
+					int dropChance = 10 * Main.rand.Next(1, 10);
 					for (int i = 0; i < 50; i++)
                     {
 						if (m_player.player.inventory[i] == null || m_player.player.inventory[i].type == Terraria.ID.ItemID.None || i < 10)
 							continue;
+						if (Main.rand.Next(100) > dropChance)
+                        {
+							dropChance += 10;
+							continue;
+                        }
+						dropChance = 0;
 						m_player.player.inventory[i].favorited = false;
 						m_player.player.selectedItem = i;
-						m_player.player.velocity.X = Main.rand.Next(2, 14);
+						m_player.player.velocity.X = Main.rand.Next(6, 24);
 						m_player.player.direction = Choose(-1, 1);
 						m_player.player.DropSelectedItem();
 					}
@@ -921,6 +936,58 @@ namespace CrowdControlMod
 					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
 						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, swordID, 1f);
 					ShowEffectMessage(swordType, viewer + " gave " + m_player.player.name + " a " + Main.item[swordID].Name, MSG_C_POSITIVE);
+					break;
+
+				case "item_ranged":
+					int bowType = ChoosePerProgression(
+						preEye: Choose(0),
+						preSkeletron: Choose(0),
+						preWOF: Choose(0),
+						preMech: Choose(0),
+						preGolem: Choose(0),
+						preLunar: Choose(0),
+						preMoonLord: Choose(0),
+						postGame: Choose(0)
+					);
+					int bowID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, bowType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, bowID, 1f);
+					ShowEffectMessage(bowType, viewer + " gave " + m_player.player.name + " a " + Main.item[bowID].Name, MSG_C_POSITIVE);
+					break;
+
+				case "item_magic":
+					int mageType = ChoosePerProgression(
+						preEye: Choose(0),
+						preSkeletron: Choose(0),
+						preWOF: Choose(0),
+						preMech: Choose(0),
+						preGolem: Choose(0),
+						preLunar: Choose(0),
+						preMoonLord: Choose(0),
+						postGame: Choose(0)
+					);
+					int mageID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, mageType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, mageID, 1f);
+					ShowEffectMessage(mageType, viewer + " gave " + m_player.player.name + " a " + Main.item[mageID].Name, MSG_C_POSITIVE);
+					break;
+
+
+				case "item_acc":
+					int accType = ChoosePerProgression(
+						preEye: Choose(0),
+						preSkeletron: Choose(0),
+						preWOF: Choose(0),
+						preMech: Choose(0),
+						preGolem: Choose(0),
+						preLunar: Choose(0),
+						preMoonLord: Choose(0),
+						postGame: Choose(0)
+					);
+					int accID = Item.NewItem((int)m_player.player.position.X, (int)m_player.player.position.Y, m_player.player.width, m_player.player.height, accType, 1);
+					if (Main.netMode == Terraria.ID.NetmodeID.MultiplayerClient)
+						NetMessage.SendData(Terraria.ID.MessageID.SyncItem, -1, -1, null, accID, 1f);
+					ShowEffectMessage(accType, viewer + " gave " + m_player.player.name + " a " + Main.item[accID].Name, MSG_C_POSITIVE);
 					break;
 
 				case "item_armour":
@@ -1156,6 +1223,7 @@ namespace CrowdControlMod
 					m_player.AddBuffEffect(Terraria.ID.BuffID.Swiftness, 60 * m_timeBuffSpeed);
 					m_player.AddBuffEffect(Terraria.ID.BuffID.SugarRush, 60 * m_timeBuffSpeed);
 					m_player.AddBuffEffect(Terraria.ID.BuffID.Panic, 60 * m_timeBuffSpeed);
+					m_player.AddBuffEffect(Terraria.ID.BuffID.WaterWalking, 60 * m_timeBuffSpeed);
 					ShowEffectMessage(54, viewer + " boosted the movement speed of " + m_player.player.name, MSG_C_POSITIVE);
 					break;
 
@@ -1371,6 +1439,7 @@ namespace CrowdControlMod
 					m_player.StopBuffEffect(Terraria.ID.BuffID.Swiftness);
 					m_player.StopBuffEffect(Terraria.ID.BuffID.SugarRush);
 					m_player.StopBuffEffect(Terraria.ID.BuffID.Panic);
+					m_player.StopBuffEffect(Terraria.ID.BuffID.WaterWalking);
 					break;
 
 				case "buff_invis":
@@ -1688,6 +1757,7 @@ namespace CrowdControlMod
 			if (Main.netMode == Terraria.ID.NetmodeID.SinglePlayer)
 			{
 				int kingID = NPC.NewNPC(x, y, Terraria.ID.NPCID.KingSlime);
+				Main.npc[kingID].target = Main.myPlayer;
 				Main.npc[kingID].lifeMax = DetermineKingSlimeHealth();
 				Main.npc[kingID].life = Main.npc[kingID].lifeMax;
 				ShowEffectMessage(Terraria.ID.ItemID.SlimeCrown, viewer + " summoned a King Slime", MSG_C_NEGATIVE);
@@ -1702,6 +1772,7 @@ namespace CrowdControlMod
 			else
             {
 				int kingID = NPC.NewNPC(x, y, Terraria.ID.NPCID.KingSlime);
+				Main.npc[kingID].target = Main.npc[kingID].FindClosestPlayer();
 				Main.npc[kingID].lifeMax = DetermineKingSlimeHealth();
 				Main.npc[kingID].life = Main.npc[kingID].lifeMax;
 				NetMessage.SendData(Terraria.ID.MessageID.SyncNPC, -1, -1, null, kingID);

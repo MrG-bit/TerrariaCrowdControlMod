@@ -1,5 +1,5 @@
 displayName = Crowd Control for Terraria
 author = MR.G-bit
-version = 1.0.3
+version = 1.0.4
 homepage = https://forum.warp.world/t/terraria-pc/16839
 hideCode = true

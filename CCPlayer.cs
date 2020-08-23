@@ -50,6 +50,7 @@ namespace CrowdControlMod
             ProjectileID.StickyGrenade,
             ProjectileID.BouncyGrenade,
             ProjectileID.Beenade,
+            ProjectileID.Beenade,
             ProjectileID.PartyGirlGrenade,
             ProjectileID.SmokeBomb,
             ProjectileID.HappyBomb,
@@ -60,12 +61,12 @@ namespace CrowdControlMod
             589, // Friendly santa projectiles
             ProjectileID.DD2GoblinBomb
         };            // List of grenades that can be spawned
-        private readonly static int m_minExplosiveDelay = 60;       // Min / max delay between bombs spawning from the player
-        private readonly static int m_maxExplosiveDelay = 80;
-        private readonly static int m_minGrenadeDelay = 15;         // Min / max delay between grenades spawning from the player
-        private readonly static int m_maxGrenadeDelay = 40;
+        private readonly static int m_minExplosiveDelay = 90;       // Min / max delay between bombs spawning from the player
+        private readonly static int m_maxExplosiveDelay = 60 * 3;
+        private readonly static int m_minGrenadeDelay = 10;         // Min / max delay between grenades spawning from the player
+        private readonly static int m_maxGrenadeDelay = 35;
         private readonly static float m_minExplosiveSpd = 5f;       // Min / max speed of explosives (bombs / grenades) spawned
-        private readonly static float m_maxExplosiveSpd = 12f;
+        private readonly static float m_maxExplosiveSpd = 14f;
         private int m_explosiveDelay = 0;                           // Delay between explosives spawning from the player
         private int m_grenadeDelay = 0;                             // Delay between grenades spawning from the player
         private bool threadStartedInMultiplayer = false;              // Whether server was started when joining a multiplayer server

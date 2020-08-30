@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCServer.cs
-/// Last Updated: 2020-08-08
+/// Last Updated: 2020-08-30
 /// Author: MRG-bit
 /// Description: Connects to the socket that the Crowd Control app uses and responds to incoming effects
 ///</summary>
@@ -17,9 +17,6 @@ using System.IO;
 using Terraria.ModLoader;
 using CrowdControlMod.Projectiles;
 using CrowdControlMod.NPCs;
-using System.Security.Permissions;
-using Mono.Cecil.Cil;
-using IL.Terraria.Localization;
 
 namespace CrowdControlMod
 {
@@ -710,7 +707,7 @@ namespace CrowdControlMod
 			// Check if viewer name is blank or not able to be displayed
 			Terraria.Localization.NetworkText text = Terraria.Localization.NetworkText.FromLiteral(viewer);
 			if (string.IsNullOrEmpty(viewer) || text == Terraria.Localization.NetworkText.Empty)
-				viewer = "A Viewer";
+				viewer = "Chat";
 
 			// Start or stop the effect
 			if (requestType != (int)RequestType.STOP)

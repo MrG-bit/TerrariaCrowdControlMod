@@ -1,6 +1,6 @@
 ﻿///<summary>
 /// File: CCPlayer.cs
-/// Last Updated: 2020-08-08
+/// Last Updated: 2020-08-30
 /// Author: MRG-bit
 /// Description: Modded player file
 ///</summary>
@@ -61,12 +61,12 @@ namespace CrowdControlMod
             589, // Friendly santa projectiles
             ProjectileID.DD2GoblinBomb
         };            // List of grenades that can be spawned
-        private readonly static int m_minExplosiveDelay = 90;       // Min / max delay between bombs spawning from the player
-        private readonly static int m_maxExplosiveDelay = 60 * 3;
+        private readonly static int m_minExplosiveDelay = 60;       // Min / max delay between bombs spawning from the player
+        private readonly static int m_maxExplosiveDelay = 60 * 2;
         private readonly static int m_minGrenadeDelay = 10;         // Min / max delay between grenades spawning from the player
         private readonly static int m_maxGrenadeDelay = 35;
         private readonly static float m_minExplosiveSpd = 5f;       // Min / max speed of explosives (bombs / grenades) spawned
-        private readonly static float m_maxExplosiveSpd = 14f;
+        private readonly static float m_maxExplosiveSpd = 11f;
         private int m_explosiveDelay = 0;                           // Delay between explosives spawning from the player
         private int m_grenadeDelay = 0;                             // Delay between grenades spawning from the player
         private bool threadStartedInMultiplayer = false;              // Whether server was started when joining a multiplayer server
